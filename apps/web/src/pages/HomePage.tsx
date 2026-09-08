@@ -89,7 +89,7 @@ export function HomePage() {
           disabled={creating}
         >
           {creating ? <LoaderCircle className="animate-spin" size={17} /> : null}
-          {creating ? 'Criando sala…' : 'Criar nova sala'}
+          {creating ? 'Criando sala…' : 'Criar Nova Sala'}
           {!creating ? <ArrowRight size={17} /> : null}
         </Button>
         {createError && (
