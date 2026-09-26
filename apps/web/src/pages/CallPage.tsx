@@ -1,5 +1,5 @@
-import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
-import { Headphones, Share2, ShieldCheck, UsersRound } from 'lucide-react';
+import { RoomAudioRenderer, RoomContext, useChat } from '@livekit/components-react';
+import { Headphones, MessageSquare, Share2, ShieldCheck, UsersRound } from 'lucide-react';
 import { ConnectionState, RoomEvent } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
@@ -10,6 +10,7 @@ import type {
 } from '@ufmg/shared';
 import { CallControls } from '../components/call/CallControls.js';
 import { CallToast, type CallToastMessage, type ToastTone } from '../components/call/CallToast.js';
+import { ChatPanel } from '../components/call/ChatPanel.js';
 import { ConnectionNotice } from '../components/call/ConnectionNotice.js';
 import { DeviceSettings } from '../components/call/DeviceSettings.js';
 import {
@@ -158,6 +159,9 @@ function CallExperience({
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [managementOpen, setManagementOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const { chatMessages, send: sendChatMessage, isSending: isSendingChatMessage } = useChat();
   const [participantRevision, setParticipantRevision] = useState(0);
   const [pendingAdmissions, setPendingAdmissions] = useState<PendingAdmission[]>([]);
   const [audioBlocked, setAudioBlocked] = useState(false);
@@ -171,6 +175,34 @@ function CallExperience({
     saveThumbnailLayoutPreferences(layout);
   }, []);
   useKeyboardShortcuts(toggleDiagnostics);
+
+  // Tracks how many chat messages we'd already accounted for last time the effect below got called so we can tell how many are new
+  const previousChatMessageCount = useRef(0);
+  // Tracks the last number sent to setUnreadChatCount
+  const lastUnreadCountSent = useRef(0);
+
+  useEffect(() => {
+    const newMessageCount = chatMessages.length - previousChatMessageCount.current;
+    previousChatMessageCount.current = chatMessages.length;
+
+    if (newMessageCount > 0 && !chatOpen) {
+      const nextUnreadCount = lastUnreadCountSent.current + newMessageCount;
+      lastUnreadCountSent.current = nextUnreadCount;
+      setUnreadChatCount(nextUnreadCount);
+    }
+  }, [chatMessages.length, chatOpen]);
+
+  const toggleChat = useCallback(() => {
+    setChatOpen((open) => {
+      const nextOpen = !open;
+      if (nextOpen) {
+        lastUnreadCountSent.current = 0;
+        setUnreadChatCount(0);
+      }
+      return nextOpen;
+    });
+  }, []);
+
 
   useEffect(() => {
     const update = () => setAudioBlocked(!room.canPlaybackAudio);
@@ -364,6 +396,23 @@ function CallExperience({
         <div className="flex items-center gap-3">
           <button
             type="button"
+            className="ui-motion relative flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
+            aria-label="Chat"
+            title="Chat"
+            onClick={toggleChat}
+          >
+            <MessageSquare size={15} />
+            {unreadChatCount > 0 && (
+              <span
+                className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-bold text-black"
+                aria-label={`${unreadChatCount} novas mensagens`}
+              >
+                {unreadChatCount > 99 ? '+99' : unreadChatCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
             className="ui-motion flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
             onClick={() => void shareCall()}
           >
@@ -427,6 +476,14 @@ function CallExperience({
       )}
       {diagnosticsOpen && (
         <DiagnosticsPanel snapshot={snapshot} onClose={() => setDiagnosticsOpen(false)} />
+      )}
+      {chatOpen && (
+        <ChatPanel
+          messages={chatMessages}
+          send={sendChatMessage}
+          isSending={isSendingChatMessage}
+          onClose={() => setChatOpen(false)}
+        />
       )}
       {isAdmin && managementOpen && (
         <ParticipantManagement
