@@ -241,7 +241,7 @@ function ThumbnailRail({
             key={item.key}
             aria-label={`Colocar ${participantLabel(item)} em foco`}
             title={`Colocar ${participantLabel(item)} em foco`}
-            className={`ui-motion shrink-0 rounded-md border border-white/15 bg-zinc-950 text-left shadow-lg hover:-translate-y-0.5 hover:border-white/50 ${TILE_SIZES[layout.size]}`}
+            className={`ui-motion shrink-0 rounded-md border border-zinc-900/15 text-left shadow-lg hover:-translate-y-0.5 hover:border-zinc-900 ${TILE_SIZES[layout.size]}`}
             onClick={() => onFocus(item.key)}
           >
             <ParticipantVideo

@@ -437,7 +437,7 @@ function CallExperience({
             <Share2 size={15} />
             {/* <span className="hidden sm:inline">Compartilhar chamada</span> */}
           </button>
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
+          <div className="flex items-center gap-2 text-sm text-zinc-400">
             <span className={`h-2 w-2 rounded-md ${qualityColor(snapshot.quality)}`} />
             <span className="hidden sm:inline">
               {snapshot.quality === 'unknown' ? 'Medindo rede' : snapshot.quality}

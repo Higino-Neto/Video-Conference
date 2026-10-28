@@ -39,7 +39,7 @@ export function ParticipantVideo({
   return (
     <div
       data-participant-id={participant.identity}
-      className="relative h-full w-full overflow-hidden bg-[#111214]"
+      className="relative h-full w-full overflow-hidden bg-zinc-700 rounded-md"
     >
       {/* Espaçamento externo real entre o vídeo e as bordas da área disponível. */}
       <div

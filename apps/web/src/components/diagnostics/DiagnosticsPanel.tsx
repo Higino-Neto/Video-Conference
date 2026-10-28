@@ -8,7 +8,7 @@ interface DiagnosticsPanelProps {
 
 export function DiagnosticsPanel({ snapshot, onClose }: DiagnosticsPanelProps) {
   return (
-    <aside className="fixed bg-zinc-800 inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-zinc-800 p-6">
+    <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-zinc-800 p-6">
       <div className="mb-7 flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">

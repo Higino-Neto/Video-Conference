@@ -153,7 +153,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
   }
 
   return (
-    <aside className="surface-enter bg-zinc-800 absolute right-4 top-16 z-40 max-h-[calc(100dvh-8rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-md border border-zinc-700 p-5">
+    <aside className="surface-enter bg-zinc-900 absolute right-4 top-16 z-40 max-h-[calc(100dvh-8rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-md border border-zinc-700 p-5">
       <div className="mb-5 flex items-center justify-between">
         <h2 className="font-semibold">Dispositivos</h2>
         <button aria-label="Fechar configurações" onClick={onClose}>
