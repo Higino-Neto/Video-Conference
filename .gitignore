@@ -10,3 +10,4 @@ coverage/
 .vercel/
 FEATURES.md
 .npm-cache
+.data/

@@ -8,12 +8,19 @@ import { AppError } from './errors.js';
 import {
   admissionDecisionSchema,
   createRoomSchema,
+  createQuestionSchema,
   moderationActionSchema,
   participantParamsSchema,
+  questionActionSchema,
+  questionParamsSchema,
+  reorderQuestionsSchema,
   roomParamsSchema,
   tokenRequestSchema,
+  updateQuestionSchema,
 } from './schemas.js';
 import { LiveKitRoomService, type RoomService } from './services/roomManagement.js';
+import { createQuestionStore, type QuestionStore } from './services/questionStore.js';
+import { QuestionService } from './services/questions.js';
 import { SessionCredentialService } from './services/sessionCredentials.js';
 import { LiveKitTokenIssuer, type TokenIssuer } from './services/tokenService.js';
 
@@ -22,6 +29,7 @@ interface BuildAppOptions {
   tokenIssuer?: TokenIssuer;
   roomService?: RoomService;
   credentialService?: SessionCredentialService;
+  questionStore?: QuestionStore;
   logger?: boolean;
 }
 
@@ -55,9 +63,9 @@ export async function buildApp(options: BuildAppOptions) {
       if (!origin || config.webOrigins.includes(origin)) callback(null, true);
       else callback(new AppError('Origem não permitida.', 403, 'ORIGIN_NOT_ALLOWED'), false);
     },
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'OPTIONS'],
   });
-  
+
   await app.register(rateLimit, {
     global: true,
     max: 120,
@@ -69,6 +77,10 @@ export async function buildApp(options: BuildAppOptions) {
   const roomService = options.roomService ?? new LiveKitRoomService(config, credentialService);
   const tokenIssuer =
     options.tokenIssuer ?? new LiveKitTokenIssuer(config, roomService, credentialService);
+  const questionStore = options.questionStore ?? createQuestionStore(config);
+  const questionService = new QuestionService(questionStore, roomService, credentialService);
+
+  app.addHook('onClose', async () => questionStore.close());
 
   app.get('/api/health', () => ({
     status: 'ok',
@@ -94,6 +106,86 @@ export async function buildApp(options: BuildAppOptions) {
       const created = credentialService.createRoom(approvalRequired);
       await roomService.initializeRoom(created.roomName, approvalRequired);
       return reply.header('Cache-Control', 'no-store').send(created);
+    },
+  );
+
+  app.get('/api/rooms/:roomName/questions/active', async (request, reply) => {
+    const { roomName } = roomParamsSchema.parse(request.params);
+    const result = await questionService.getActive(
+      roomName,
+      extractBearer(request.headers.authorization),
+    );
+    return reply.header('Cache-Control', 'no-store').send(result);
+  });
+
+  app.get('/api/rooms/:roomName/questions', async (request, reply) => {
+    const { roomName } = roomParamsSchema.parse(request.params);
+    const result = await questionService.list(
+      roomName,
+      extractBearer(request.headers.authorization),
+    );
+    return reply.header('Cache-Control', 'no-store').send(result);
+  });
+
+  app.post(
+    '/api/rooms/:roomName/questions',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (request, reply) => {
+      const { roomName } = roomParamsSchema.parse(request.params);
+      const input = createQuestionSchema.parse(request.body);
+      const result = await questionService.create(
+        roomName,
+        input,
+        extractBearer(request.headers.authorization),
+      );
+      return reply.status(201).header('Cache-Control', 'no-store').send(result);
+    },
+  );
+
+  app.patch(
+    '/api/rooms/:roomName/questions/:questionId',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (request, reply) => {
+      const { roomName, questionId } = questionParamsSchema.parse(request.params);
+      const input = updateQuestionSchema.parse(request.body);
+      const result = await questionService.update(
+        roomName,
+        questionId,
+        input,
+        extractBearer(request.headers.authorization),
+      );
+      return reply.header('Cache-Control', 'no-store').send(result);
+    },
+  );
+
+  app.post(
+    '/api/rooms/:roomName/questions/:questionId/actions',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (request, reply) => {
+      const { roomName, questionId } = questionParamsSchema.parse(request.params);
+      const input = questionActionSchema.parse(request.body);
+      const result = await questionService.action(
+        roomName,
+        questionId,
+        input,
+        extractBearer(request.headers.authorization),
+      );
+      return reply.header('Cache-Control', 'no-store').send(result);
+    },
+  );
+
+  app.put(
+    '/api/rooms/:roomName/questions/order',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (request, reply) => {
+      const { roomName } = roomParamsSchema.parse(request.params);
+      const input = reorderQuestionsSchema.parse(request.body);
+      const result = await questionService.reorder(
+        roomName,
+        input,
+        extractBearer(request.headers.authorization),
+      );
+      return reply.header('Cache-Control', 'no-store').send(result);
     },
   );
 

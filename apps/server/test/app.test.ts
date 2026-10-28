@@ -61,6 +61,17 @@ describe('API', () => {
     ).toThrow(/LIVEKIT_URL, LIVEKIT_API_KEY e LIVEKIT_API_SECRET/);
   });
 
+  it('requires durable question storage in production', () => {
+    expect(() =>
+      loadConfig({
+        NODE_ENV: 'production',
+        LIVEKIT_URL: 'wss://test.livekit.cloud',
+        LIVEKIT_API_KEY: 'test-key',
+        LIVEKIT_API_SECRET: 'test-secret-value',
+      }),
+    ).toThrow(/DATABASE_URL/);
+  });
+
   it('supports rooms with up to one hundred participants by default', () => {
     expect(loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'silent' }).maxParticipants).toBe(100);
     expect(() =>

@@ -41,7 +41,7 @@ interface PreflightChecklistProps {
 
 export function PreflightChecklist(props: PreflightChecklistProps) {
   return (
-    <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5">
+    <section className="rounded-md border border-zinc-800 bg-zinc-900 p-5">
       <h2 className="mb-2 text-sm font-semibold uppercase tracking-[0.14em] text-zinc-400">
         System check
       </h2>
@@ -104,10 +104,10 @@ export function PreflightChecklist(props: PreflightChecklistProps) {
           }
         />
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+      {/* <p className="mt-3 text-xs leading-relaxed text-zinc-500">
         Jitter, perda de pacotes, upload e transporte ICE só ficam tecnicamente disponíveis após a
         conexão WebRTC. O painel de diagnóstico mostrará esses dados sem estimativas inventadas.
-      </p>
+      </p> */}
     </section>
   );
 }

@@ -31,7 +31,7 @@ export function ConnectionNotice({ status }: { status: CallConnectionStatus }) {
   return (
     <div
       role="status"
-      className="glass absolute left-1/2 top-5 z-30 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-zinc-700 px-4 py-3 shadow-xl"
+      className="glass absolute left-1/2 top-5 z-30 flex -translate-x-1/2 items-center gap-3 rounded-md border border-zinc-700 px-4 py-3 shadow-xl"
     >
       <span>{content[0]}</span>
       <span>

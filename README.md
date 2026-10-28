@@ -24,6 +24,10 @@ LIVEKIT_API_KEY=sua-chave
 LIVEKIT_API_SECRET=seu-segredo
 ```
 
+Em desenvolvimento, as perguntas são persistidas em `.data/questions.json`. Em produção,
+configure `DATABASE_URL` com uma conexão PostgreSQL e a tabela necessária é criada de forma
+idempotente pelo backend.
+
 3. Inicie o projeto:
 
 ```bash
@@ -38,6 +42,7 @@ Backend: `http://localhost:3001`
 ### Fluxo de uso
 
 A entrada na chamada funciona assim:
+
 1. Home cria uma sala via POST /api/rooms ou navega para uma sala existente.
 2. Lobby coleta nome, câmera, microfone, alto-falante e faz preflight de servidor/rede.
 3. App.join() chama requestJoinToken().
@@ -53,11 +58,24 @@ GET /api/rooms/:roomName/status: verifica se a sala existe.
 GET /api/rooms/:roomName/admissions: lista pedidos pendentes para o admin.
 POST /api/rooms/:roomName/admissions/:participantIdentity: aprova ou nega entrada.
 POST /api/rooms/:roomName/participants/:participantIdentity/actions: ações da moderação.
+GET /api/rooms/:roomName/questions/active: pergunta visível para quem está na sala.
+GET /api/rooms/:roomName/questions: fila e histórico completos para administradores.
+POST /api/rooms/:roomName/questions: adiciona uma pergunta à fila.
+PATCH /api/rooms/:roomName/questions/:questionId: edita pergunta e autoria.
+POST /api/rooms/:roomName/questions/:questionId/actions: exibe, responde, refila ou arquiva.
+PUT /api/rooms/:roomName/questions/order: altera a ordem das perguntas na fila.
 POST /api/token: emite token LiveKit.
 ```
+
+Todas as alterações da fila usam uma revisão otimista. Se dois administradores agirem ao mesmo
+tempo, o backend rejeita a operação baseada em estado antigo e o cliente recarrega a versão mais
+recente. O PostgreSQL ou o arquivo local é a fonte de verdade; mensagens de dados do LiveKit apenas
+avisam os clientes sobre atualizações, com polling periódico como recuperação.
+
 ### Estrutura do projeto V1.0.0
-```
-Video-Conference/
+
+````
+Video-Conferencia-UFMG/
 │
 ├── api/
 │   └── [...path].ts
@@ -188,3 +206,4 @@ Video-Conference/
         │   → Tipos compartilhados e classificação da qualidade da rede.
         └── test/networkQuality.test.ts
             → Testa a classificação de qualidade da conexão.```
+````

@@ -8,7 +8,7 @@ interface DiagnosticsPanelProps {
 
 export function DiagnosticsPanel({ snapshot, onClose }: DiagnosticsPanelProps) {
   return (
-    <aside className="glass fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-zinc-800 p-6 shadow-2xl">
+    <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-zinc-800 p-6">
       <div className="mb-7 flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
@@ -19,7 +19,7 @@ export function DiagnosticsPanel({ snapshot, onClose }: DiagnosticsPanelProps) {
         </div>
         <button
           aria-label="Fechar diagnóstico"
-          className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+          className="rounded-md p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
           onClick={onClose}
         >
           <X size={20} />

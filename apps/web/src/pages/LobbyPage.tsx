@@ -99,7 +99,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
           <section className="space-y-5">
             <CameraPreview stream={media.stream} cameraEnabled={media.cameraEnabled} />
             {!media.permissionGranted ? (
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 text-center">
+              <div className="rounded-md border border-zinc-800 bg-zinc-900 p-5 text-center">
                 <h2 className="font-semibold">Permita câmera e microfone</h2>
                 <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
                   O acesso é usado apenas para o preview e para a chamada. Você pode entrar com a
@@ -120,7 +120,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
                 </Button>
               </div>
             ) : (
-              <div className="grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5 sm:grid-cols-2">
+              <div className="grid gap-4 rounded-md border border-zinc-800 bg-zinc-900 p-5 sm:grid-cols-2">
                 <DeviceSelect
                   label="Microfone"
                   kind="audioinput"
@@ -147,11 +147,11 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
                 <div className="grid content-end gap-2">
                   <span className="text-sm text-zinc-300">Nível do microfone</span>
                   <div
-                    className="h-3 overflow-hidden rounded-full bg-zinc-800"
+                    className="h-3 overflow-hidden rounded-md bg-zinc-800"
                     aria-label={`Nível do microfone ${Math.round(level * 100)}%`}
                   >
                     <div
-                      className="h-full rounded-full bg-positive transition-[width] duration-100"
+                      className="h-full rounded-md bg-positive transition-[width] duration-100"
                       style={{ width: `${Math.max(2, level * 100)}%` }}
                     />
                   </div>
@@ -174,7 +174,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
             {media.error && (
               <div
                 role="alert"
-                className="rounded-xl border border-red-900/60 bg-red-950/30 p-4 text-sm text-red-200"
+                className="rounded-md border border-red-900/60 bg-red-950/30 p-4 text-sm text-red-200"
               >
                 {media.error}{' '}
                 <button className="ml-2 underline" onClick={() => void media.startPreview()}>
@@ -185,7 +185,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
           </section>
 
           <aside className="space-y-5">
-            <label className="grid gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 text-sm text-zinc-300">
+            <label className="grid gap-2 rounded-md border border-zinc-800 bg-zinc-900 p-5 text-sm text-zinc-300">
               Seu nome
               <input
                 autoComplete="name"
@@ -193,7 +193,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Como você deseja aparecer"
-                className="min-h-12 rounded-xl border border-zinc-700 bg-zinc-950 px-4 text-base text-white placeholder:text-zinc-600"
+                className="min-h-12 rounded-md border border-zinc-700 bg-zinc-950 px-4 text-base text-white placeholder:text-zinc-600"
               />
             </label>
             <PreflightChecklist
@@ -210,7 +210,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
               httpRttMs={network.httpRttMs}
             />
             {network.backendReachable && network.quality === 'poor' && !network.running && (
-              <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-4 text-sm leading-relaxed text-amber-100">
+              <div className="rounded-md border border-amber-900/50 bg-amber-950/20 p-4 text-sm leading-relaxed text-amber-100">
                 <strong>Rede instável detectada.</strong>
                 <br />
                 Use Ethernet, desative VPN se possível e pause downloads antes de entrar.
@@ -219,7 +219,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
             {(joinError || network.error) && (
               <div
                 role="alert"
-                className="rounded-xl border border-red-900/60 bg-red-950/30 p-4 text-sm text-red-200"
+                className="rounded-md border border-red-900/60 bg-red-950/30 p-4 text-sm text-red-200"
               >
                 {joinError ?? network.error}
               </div>
@@ -227,7 +227,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
             {approvalPending && (
               <div
                 role="status"
-                className="rounded-xl border border-amber-800/50 bg-amber-950/25 p-4 text-sm text-amber-100"
+                className="rounded-md border border-amber-800/50 bg-amber-950/25 p-4 text-sm text-amber-100"
               >
                 <strong>Aguardando aprovação</strong>
                 <p className="mt-1 text-xs leading-relaxed text-amber-200/70">
@@ -238,7 +238,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
             )}
             <Button
               variant="primary"
-              className="w-full"
+              className="w-full cursor-pointer"
               disabled={!ready || joining || approvalPending}
               onClick={() => void join()}
             >

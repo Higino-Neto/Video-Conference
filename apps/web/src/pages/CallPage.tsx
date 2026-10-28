@@ -6,8 +6,10 @@ import type {
   AdmissionDecision,
   ModerationAction,
   PendingAdmission,
+  QuestionQueueResponse,
   TokenResponse,
 } from '@ufmg/shared';
+import { ActiveQuestion } from '../components/call/ActiveQuestion.js';
 import { CallControls } from '../components/call/CallControls.js';
 import { CallToast, type CallToastMessage, type ToastTone } from '../components/call/CallToast.js';
 import { ChatPanel } from '../components/call/ChatPanel.js';
@@ -17,11 +19,13 @@ import {
   ParticipantManagement,
   type ManagedParticipant,
 } from '../components/call/ParticipantManagement.js';
+import { QuestionManagement, type QuestionAuthor } from '../components/call/QuestionManagement.js';
 import { VideoStage } from '../components/call/VideoStage.js';
 import { DiagnosticsPanel } from '../components/diagnostics/DiagnosticsPanel.js';
 import { useCallConnection } from '../hooks/useCallConnection.js';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts.js';
 import { useNetworkStats } from '../hooks/useNetworkStats.js';
+import { isQuestionQueue, useMeetingQuestions } from '../hooks/useMeetingQuestions.js';
 import { createCallRoom } from '../lib/livekit/createRoom.js';
 import { decideAdmission, fetchAdmissionQueue, moderateParticipant } from '../lib/api/client.js';
 import { logger } from '../lib/logger.js';
@@ -61,7 +65,7 @@ export function CallPage({ session, roomId, preferences, onLeave }: CallPageProp
         await room.prepareConnection(session.serverUrl, session.participantToken);
         await room.connect(session.serverUrl, session.participantToken, {
           autoSubscribe: true,
-          maxRetries: 3,
+          maxRetries: 5,
           websocketTimeout: 15_000,
           peerConnectionTimeout: 15_000,
         });
@@ -105,8 +109,30 @@ export function CallPage({ session, roomId, preferences, onLeave }: CallPageProp
       }
     });
 
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void room.localParticipant
+          .setCameraEnabled(preferences.cameraEnabled)
+          .catch((err) =>
+            logger.warn('Failed to restore camera on visibility', {
+              message: err instanceof Error ? err.message : 'unknown',
+            }),
+          );
+        void room.localParticipant
+          .setMicrophoneEnabled(preferences.microphoneEnabled)
+          .catch((err) =>
+            logger.warn('Failed to restore microphone on visibility', {
+              message: err instanceof Error ? err.message : 'unknown',
+            }),
+          );
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       active = false;
+      document.removeEventListener('visibilitychange', handleVisibility);
       lifecycle.current = lifecycle.current.then(() => room.disconnect(true));
     };
   }, [
@@ -214,27 +240,60 @@ function CallExperience({
 
   useEffect(() => {
     const refresh = () => setParticipantRevision((revision) => revision + 1);
+    room.on(RoomEvent.Connected, refresh);
     room.on(RoomEvent.ParticipantConnected, refresh);
     room.on(RoomEvent.ParticipantDisconnected, refresh);
     room.on(RoomEvent.ParticipantAttributesChanged, refresh);
+    room.on(RoomEvent.ParticipantNameChanged, refresh);
     return () => {
+      room.off(RoomEvent.Connected, refresh);
       room.off(RoomEvent.ParticipantConnected, refresh);
       room.off(RoomEvent.ParticipantDisconnected, refresh);
       room.off(RoomEvent.ParticipantAttributesChanged, refresh);
+      room.off(RoomEvent.ParticipantNameChanged, refresh);
     };
   }, [room]);
 
   const isAdmin =
     session.role === 'admin' || room.localParticipant.attributes['ufmg.role'] === 'admin';
-  const managedParticipants = useMemo<ManagedParticipant[]>(
+  const managedParticipants = useMemo<ManagedParticipant[]>(() => {
+    void participantRevision;
+    return [...room.remoteParticipants.values()].map((participant) => ({
+      identity: participant.identity,
+      name: participant.name || 'Convidado',
+      isAdmin: participant.attributes['ufmg.role'] === 'admin',
+    }));
+  }, [participantRevision, room]);
+  const questionAuthors = useMemo<QuestionAuthor[]>(
     () =>
-      [...room.remoteParticipants.values()].map((participant) => ({
-        identity: participant.identity,
-        name: participant.name || 'Convidado',
-        isAdmin: participant.attributes['ufmg.role'] === 'admin',
-      })),
-    [participantRevision, room],
+      [
+        {
+          identity: room.localParticipant.identity,
+          name: room.localParticipant.name || 'Você',
+        },
+        ...managedParticipants.map(({ identity, name }) => ({ identity, name })),
+      ].filter(
+        (author, index, list) =>
+          author.identity.length >= 8 &&
+          list.findIndex((candidate) => candidate.identity === author.identity) === index,
+      ),
+    [managedParticipants, room],
   );
+  const {
+    state: questionState,
+    setState: setQuestionState,
+    loading: questionsLoading,
+    error: questionsError,
+    refresh: refreshQuestions,
+  } = useMeetingQuestions(room, roomId, session.resumeCredential, isAdmin);
+  const adminQuestionState: QuestionQueueResponse = isQuestionQueue(questionState)
+    ? questionState
+    : {
+        ...questionState,
+        queuedQuestions: [],
+        answeredQuestions: [],
+        archivedQuestions: [],
+      };
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -373,16 +432,19 @@ function CallExperience({
           {isAdmin && (
             <button
               type="button"
-              className="ui-motion flex items-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-xs font-medium text-amber-100 hover:bg-zinc-700/40"
+              className="ui-motion flex items-center gap-2 rounded-md border border-white/20 px-3 py-2 text-xs font-medium text-zinc-100 hover:bg-zinc-700/40"
               aria-label="Gerenciar participantes"
               title="Gerenciar participantes"
-              onClick={() => setManagementOpen((open) => !open)}
+              onClick={() => {
+                setQuestionsOpen(false);
+                setManagementOpen((open) => !open);
+              }}
             >
               <UsersRound size={15} />
               {/* <span className="hidden md:inline">Gerenciar</span> */}
               {pendingAdmissions.length > 0 && (
                 <span
-                  className="flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold text-black"
+                  className="flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-[11px] font-bold text-black"
                   aria-label={`${pendingAdmissions.length} aguardando aprovação`}
                 >
                   {pendingAdmissions.length > 99 ? '99+' : pendingAdmissions.length}
@@ -390,13 +452,39 @@ function CallExperience({
               )}
             </button>
           )}
+          {/* {isAdmin && (
+            <button
+              type="button"
+              className={`ui-motion relative flex h-9 w-9 items-center justify-center rounded-md text-zinc-200  ${
+                questionsOpen ? ' bg-green-300' : 'border-white/20 hover:bg-white/10'
+              }`}
+              aria-label="Gerenciar perguntas"
+              title="Gerenciar perguntas"
+              onClick={() => {
+                setManagementOpen(false);
+                setQuestionsOpen((open) => !open);
+              }}
+            >
+              <MessageCircleQuestion size={17} />
+              {(adminQuestionState.activeQuestion ||
+                adminQuestionState.queuedQuestions.length > 0) && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-md bg-green-300 px-1 text-[10px] font-bold text-green-950">
+                  {Math.min(
+                    99,
+                    adminQuestionState.queuedQuestions.length +
+                      (adminQuestionState.activeQuestion ? 1 : 0),
+                  )}
+                </span>
+              )}
+            </button>
+          )} */}
           <ShieldCheck size={18} />
           <span className="text-sm font-semibold">Sala {roomId}</span>
         </div>
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="ui-motion relative flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
+            className="ui-motion relative flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
             aria-label="Chat"
             title="Chat"
             onClick={toggleChat}
@@ -404,7 +492,7 @@ function CallExperience({
             <MessageSquare size={15} />
             {unreadChatCount > 0 && (
               <span
-                className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[11px] font-bold text-black"
+                className="flex h-5 min-w-5 items-center justify-center rounded-md bg-zinc-700 px-1 text-[11px] font-bold text-black"
                 aria-label={`${unreadChatCount} novas mensagens`}
               >
                 {unreadChatCount > 99 ? '+99' : unreadChatCount}
@@ -419,16 +507,22 @@ function CallExperience({
             <Share2 size={15} />
             {/* <span className="hidden sm:inline">Compartilhar chamada</span> */}
           </button>
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <span className={`h-2 w-2 rounded-full ${qualityColor(snapshot.quality)}`} />
+          <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <span className={`h-2 w-2 rounded-md ${qualityColor(snapshot.quality)}`} />
             <span className="hidden sm:inline">
               {snapshot.quality === 'unknown' ? 'Medindo rede' : snapshot.quality}
             </span>
           </div>
         </div>
       </header>
-      
-      <div className="absolute inset-x-0 bottom-0 top-16">
+      {/* <ActiveQuestion
+        // key={questionsOpen ? 'hidden' : (questionState.activeQuestion?.id ?? 'empty')}
+        // question={questionsOpen ? null : questionState.activeQuestion}
+                key={questionState.activeQuestion?.id ?? 'empty'}
+        question={questionState.activeQuestion}
+      /> */}
+
+      <div className="mx-6 absolute inset-x-0 bottom-0 top-16">
         {showStage ? (
           <VideoStage layout={thumbnailLayout} />
         ) : (
@@ -441,7 +535,9 @@ function CallExperience({
       <ConnectionNotice status={connectionFailed ? 'failed' : status} />
       {audioBlocked && (
         <button
-          className="absolute left-1/2 top-24 z-30 flex -translate-x-1/2 items-center gap-2 rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-black"
+          className={`absolute left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-md bg-zinc-700 px-4 py-3 text-sm font-semibold text-black ${
+            questionState.activeQuestion ? 'bottom-28' : 'top-24'
+          }`}
           onClick={() =>
             void room
               .startAudio()
@@ -458,7 +554,13 @@ function CallExperience({
           <Headphones size={17} /> Ativar áudio da chamada
         </button>
       )}
-      {toast && <CallToast toast={toast} onClose={dismissToast} />}
+      {toast && (
+        <CallToast
+          toast={toast}
+          onClose={dismissToast}
+          belowQuestion={Boolean(questionState.activeQuestion && !questionsOpen)}
+        />
+      )}
       <CallControls
         screenShareSupported={capabilities.screenShare}
         onSettings={() => setSettingsOpen((open) => !open)}
@@ -494,13 +596,27 @@ function CallExperience({
           onAdmission={handleAdmission}
         />
       )}
+      {isAdmin && questionsOpen && (
+        <QuestionManagement
+          roomName={roomId}
+          resumeCredential={session.resumeCredential}
+          state={adminQuestionState}
+          authors={questionAuthors}
+          loading={questionsLoading}
+          {...(questionsError ? { error: questionsError.message } : {})}
+          onClose={() => setQuestionsOpen(false)}
+          onChange={setQuestionState}
+          onRefresh={refreshQuestions}
+          notify={notify}
+        />
+      )}
     </main>
   );
 }
 
 function qualityColor(quality: string) {
   return quality === 'excellent'
-    ? 'bg-emerald-400'
+    ? 'bg-green-300'
     : quality === 'good'
       ? 'bg-lime-400'
       : quality === 'fair'

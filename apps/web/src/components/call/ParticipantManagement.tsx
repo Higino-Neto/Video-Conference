@@ -72,7 +72,7 @@ export function ParticipantManagement({
   return (
     <aside
       aria-label="Gerenciar participantes"
-      className="surface-enter glass absolute bottom-24 right-4 top-20 z-40 flex w-[min(26rem,calc(100%-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+      className="surface-enter bg-zinc-800 absolute bottom-24 right-4 top-20 z-40 flex w-[min(26rem,calc(100%-2rem))] flex-col overflow-hidden rounded-md border border-white/10 shadow-2xl"
     >
       <header className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div>
@@ -84,7 +84,7 @@ export function ParticipantManagement({
         </div>
         <button
           type="button"
-          className="ui-motion rounded-lg p-2 text-zinc-400 hover:bg-white/10 hover:text-white"
+          className="ui-motion rounded-md p-2 text-zinc-400 hover:bg-white/10 hover:text-white"
           aria-label="Fechar gerenciamento"
           onClick={onClose}
         >
@@ -94,7 +94,7 @@ export function ParticipantManagement({
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
         {pendingAdmissions.length > 0 && (
-          <section className="rounded-xl border border-amber-700/40 bg-amber-950/20 p-3">
+          <section className="rounded-md border border-amber-700/40 bg-amber-950/20 p-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-200">
               Pedidos de entrada
             </h3>
@@ -102,14 +102,14 @@ export function ParticipantManagement({
               {pendingAdmissions.map((admission) => (
                 <div
                   key={admission.participantIdentity}
-                  className="flex items-center gap-2 rounded-lg bg-black/25 p-2"
+                  className="flex items-center gap-2 rounded-md bg-black/25 p-2"
                 >
                   <span className="min-w-0 flex-1 truncate text-sm">
                     {admission.participantName}
                   </span>
                   <button
                     type="button"
-                    className="ui-motion rounded-lg bg-emerald-700/40 p-2 text-emerald-100 hover:bg-emerald-700/60 disabled:opacity-50"
+                    className="ui-motion rounded-md bg-green-300 p-2 text-green-100 hover:bg-green-400 disabled:opacity-50"
                     aria-label={`Aceitar ${admission.participantName}`}
                     disabled={Boolean(pending)}
                     onClick={() => void decide(admission, 'approve')}
@@ -122,7 +122,7 @@ export function ParticipantManagement({
                   </button>
                   <button
                     type="button"
-                    className="ui-motion rounded-lg bg-red-900/35 p-2 text-red-200 hover:bg-red-900/55 disabled:opacity-50"
+                    className="ui-motion rounded-md bg-red-900/35 p-2 text-red-200 hover:bg-red-900/55 disabled:opacity-50"
                     aria-label={`Recusar ${admission.participantName}`}
                     disabled={Boolean(pending)}
                     onClick={() => void decide(admission, 'deny')}
@@ -139,24 +139,24 @@ export function ParticipantManagement({
           </section>
         )}
         {participants.length === 0 ? (
-          <p className="rounded-xl border border-white/10 bg-black/20 p-4 text-center text-sm text-zinc-400">
+          <p className="rounded-md border border-white/10 bg-black/20 p-4 text-center text-sm text-zinc-400">
             Nenhum outro participante na sala.
           </p>
         ) : (
           participants.map((participant) => (
             <section
               key={participant.identity}
-              className="rounded-xl border border-white/10 bg-black/30 p-3"
+              className="rounded-md border border-white/10 bg-black/30 p-3"
             >
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-xs font-semibold">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-700 text-xs font-semibold">
                   {participant.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">
                   {participant.name}
                 </span>
                 {participant.isAdmin && (
-                  <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-1 text-[11px] text-amber-200">
+                  <span className="flex items-center gap-1 rounded-md bg-amber-400/15 px-2 py-1 text-[11px] text-amber-200">
                     <Crown size={12} /> Admin
                   </span>
                 )}
@@ -227,7 +227,7 @@ function ActionButton({
   return (
     <button
       type="button"
-      className={`ui-motion flex min-h-9 items-center justify-center gap-1.5 rounded-lg border px-2 text-xs disabled:cursor-wait disabled:opacity-50 ${
+      className={`ui-motion flex min-h-9 items-center justify-center gap-1.5 rounded-md border px-2 text-xs disabled:cursor-wait disabled:opacity-50 ${
         danger
           ? 'border-red-900/60 bg-red-950/30 text-red-200 hover:bg-red-900/40'
           : 'border-white/10 bg-white/5 text-zinc-200 hover:bg-white/10'

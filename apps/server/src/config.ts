@@ -39,6 +39,8 @@ const envSchema = z.object({
   ALLOWED_ROOMS: z.string().default(''),
   MEETING_MODE: z.enum(['standard', 'high-reliability']).default('high-reliability'),
   ENABLE_ADVANCED_NOISE_FILTER: booleanString,
+  DATABASE_URL: z.string().trim().default(''),
+  QUESTION_STORE_PATH: z.string().trim().min(1).default('.data/questions.json'),
 });
 
 export type ServerConfig = ReturnType<typeof loadConfig>;
@@ -62,6 +64,11 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env) {
       'Invalid server configuration: LIVEKIT_URL, LIVEKIT_API_KEY e LIVEKIT_API_SECRET são obrigatórios em produção.',
     );
   }
+  if (parsed.data.NODE_ENV === 'production' && !parsed.data.DATABASE_URL) {
+    throw new Error(
+      'Invalid server configuration: DATABASE_URL é obrigatório em produção para persistir as perguntas.',
+    );
+  }
 
   return {
     nodeEnv: parsed.data.NODE_ENV,
@@ -83,6 +90,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env) {
     ),
     meetingMode: parsed.data.MEETING_MODE,
     advancedNoiseFilterEnabled: parsed.data.ENABLE_ADVANCED_NOISE_FILTER,
+    databaseUrl: parsed.data.DATABASE_URL,
+    questionStorePath: parsed.data.QUESTION_STORE_PATH,
   } as const;
 }
 
