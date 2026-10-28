@@ -40,8 +40,8 @@ export function HomePage() {
   }, []);
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-5 text-zinc-100">
-      <section className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-900/60 p-7 shadow-2xl sm:p-10">
-        <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-950">
+      <section className="w-full max-w-lg rounded-md border border-zinc-800 bg-zinc-900 p-7 shadow-2xl sm:p-10">
+        <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-md bg-zinc-100 text-zinc-950">
           <ShieldCheck />
         </div>
         {/* <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
@@ -51,14 +51,14 @@ export function HomePage() {
           Crie uma sala e compartilhe o link.
         </p>
         {recentRoom && (
-          <div className="mt-6 rounded-2xl border border-emerald-800/60 bg-emerald-950/25 p-4">
+          <div className="mt-6 rounded-md border border-green-300 bg-green-950 p-4">
             <div className="flex items-start gap-3">
-              <PhoneCall className="mt-0.5 shrink-0 text-emerald-400" size={18} />
+              <PhoneCall className="mt-0.5 shrink-0 text-green-300" size={18} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-emerald-100">
+                <p className="text-sm font-semibold text-green-100">
                   Sua última chamada continua ativa
                 </p>
-                <p className="mt-1 text-xs text-emerald-200/70">Sala {recentRoom}</p>
+                <p className="mt-1 text-xs text-green-200">Sala {recentRoom}</p>
                 <Button className="mt-3" onClick={() => navigate(recentRoom)}>
                   Voltar para a chamada <ArrowRight size={16} />
                 </Button>
@@ -66,7 +66,7 @@ export function HomePage() {
             </div>
           </div>
         )}
-        <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border border-zinc-800 bg-black/20 p-4">
+        <label className="mt-6 flex cursor-pointer items-start gap-3 rounded-md border border-zinc-800 bg-black/20 p-4">
           <input
             type="checkbox"
             className="mt-0.5 h-4 w-4 accent-zinc-100"
@@ -111,7 +111,7 @@ export function HomePage() {
               if (event.key === 'Enter' && valid) navigate(room);
             }}
             placeholder="Código da sala"
-            className="min-h-11 min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-4"
+            className="min-h-11 min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-4"
           />
           <Button disabled={!valid} onClick={() => navigate(room)}>
             <ArrowRight size={18} />

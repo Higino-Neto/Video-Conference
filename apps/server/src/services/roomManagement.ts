@@ -1,4 +1,5 @@
 import {
+  DataPacket_Kind,
   RoomServiceClient,
   TrackSource,
   type ParticipantInfo,
@@ -54,6 +55,8 @@ export interface RoomService {
     action: ModerationAction,
     resumeCredential: string | undefined,
   ): Promise<ModerationResponse>;
+  assertAdmin(roomName: string, resumeCredential: string | undefined): Promise<string>;
+  notifyQuestionsChanged(roomName: string, revision: number): Promise<void>;
 }
 
 export class LiveKitRoomService implements RoomService {
@@ -319,6 +322,24 @@ export class LiveKitRoomService implements RoomService {
     }
   }
 
+  async assertAdmin(roomName: string, resumeCredential: string | undefined) {
+    const { requesterIdentity } = await this.authorizeAdmin(roomName, resumeCredential);
+    return requesterIdentity;
+  }
+
+  async notifyQuestionsChanged(roomName: string, revision: number) {
+    try {
+      await this.client.sendData(
+        roomName,
+        new TextEncoder().encode(JSON.stringify({ type: 'questions.updated', revision })),
+        DataPacket_Kind.RELIABLE,
+        { topic: 'ufmg.questions' },
+      );
+    } catch {
+      // Polling is the fallback when the room is closing or LiveKit is temporarily unavailable.
+    }
+  }
+
   private assertConfigured() {
     if (!this.config.livekitConfigured) {
       throw new AppError('LiveKit não está configurado.', 503, 'LIVEKIT_NOT_CONFIGURED');
@@ -350,7 +371,7 @@ export class LiveKitRoomService implements RoomService {
           'ADMIN_REQUIRED',
         );
       }
-      return { policy };
+      return { policy, requesterIdentity };
     } catch (error) {
       if (error instanceof AppError) throw error;
       throw liveKitUnavailable(error);
@@ -395,7 +416,9 @@ function parsePolicy(metadata: string): RoomPolicy {
           : [],
       };
     }
-  } catch {}
+  } catch {
+    // Invalid metadata falls back to a clean policy below.
+  }
   return {
     ...DEFAULT_POLICY,
     owners: [],

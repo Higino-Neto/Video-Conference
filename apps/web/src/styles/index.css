@@ -58,7 +58,7 @@ input:focus-visible {
     box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .ui-motion:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: scale(0.995);
   transition-duration: 90ms;
 }
 .surface-enter {
@@ -66,6 +66,9 @@ input:focus-visible {
 }
 .fade-enter {
   animation: fade-enter 240ms ease-out both;
+}
+.question-enter {
+  animation: question-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes surface-enter {
@@ -88,11 +91,25 @@ input:focus-visible {
   }
 }
 
+@keyframes question-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ui-motion,
   .surface-enter,
   .fade-enter {
     animation: none;
     transition-duration: 1ms;
+  }
+  .question-enter {
+    animation: none;
   }
 }

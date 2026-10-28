@@ -14,7 +14,7 @@ export function Button({ children, className = '', variant = 'secondary', ...pro
   };
   return (
     <button
-      className={`ui-motion inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+      className={`ui-motion inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold disabled:cursor-not-allowed ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

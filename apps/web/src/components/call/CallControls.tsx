@@ -173,13 +173,13 @@ export function CallControls({
       <button
         aria-label="Sair da chamada"
         title="Sair da chamada"
-        className="ui-motion ml-2 flex h-12 w-14 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-500"
+        className="ui-motion ml-4 flex h-12 w-14 items-center justify-center rounded-md bg-[#B93842] text-white hover:bg-red-500"
         onClick={onLeave}
       >
         <PhoneOff size={21} />
       </button>
       <button
-        className="ui-motion absolute right-3 top-1 text-[10px] text-zinc-600 hover:text-zinc-300"
+        className="ui-motion absolute right-3 top-1 m-3 mt-5 text-[10px] text-zinc-600 hover:text-zinc-300"
         onClick={onDiagnostics}
       >
         Diagnóstico
@@ -207,7 +207,7 @@ function ControlButton({
       aria-label={label}
       title={label}
       aria-busy={pending || undefined}
-      className={`ui-motion flex h-12 w-12 items-center justify-center rounded-full border sm:w-14 ${attention ? 'border-amber-500/70 bg-amber-950/70 text-amber-100 hover:bg-amber-900/70' : active === false ? 'border-red-900/50 bg-red-950/40 text-red-200' : 'border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700'} disabled:cursor-wait disabled:opacity-60 ${className}`}
+      className={`text-zinc-100 border-zinc-700 bg-zinc-800 hover:bg-zinc-700 ui-motion flex h-12 w-12 items-center justify-center rounded-md border sm:w-14 ${attention ? ' text-zinc-100' : active === false ? ' text-zinc-100' : 'border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700'} disabled:cursor-wait disabled:opacity-60 ${className}`}
       {...props}
     >
       {children}

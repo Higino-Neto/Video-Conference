@@ -153,7 +153,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
   }
 
   return (
-    <aside className="surface-enter glass absolute right-4 top-16 z-40 max-h-[calc(100dvh-8rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-2xl border border-zinc-700 p-5 shadow-2xl">
+    <aside className="surface-enter bg-zinc-800 absolute right-4 top-16 z-40 max-h-[calc(100dvh-8rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-md border border-zinc-700 p-5">
       <div className="mb-5 flex items-center justify-between">
         <h2 className="font-semibold">Dispositivos</h2>
         <button aria-label="Fechar configurações" onClick={onClose}>
@@ -162,7 +162,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
       </div>
       <div className="relative grid gap-4" aria-busy={Boolean(switching)}>
         {switching && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-zinc-950/70 text-sm text-zinc-300 backdrop-blur-sm">
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-zinc-950/70 text-sm text-zinc-300 backdrop-blur-sm">
             <LoaderCircle className="mr-2 animate-spin" size={17} /> Testando dispositivo…
           </div>
         )}
@@ -198,7 +198,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
         <label className="grid gap-2 text-sm text-zinc-300">
           Qualidade da câmera
           <select
-            className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-900 px-3"
+            className="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
             value={quality}
             onChange={(event) => void changeQuality(event.target.value as '720p' | '1080p')}
           >
@@ -216,7 +216,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
           <label className="grid gap-2 text-sm text-zinc-300">
             Posição
             <select
-              className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-900 px-3"
+              className="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
               value={layout.position}
               onChange={(event) =>
                 updateLayout({ position: event.target.value as ThumbnailPosition })
@@ -232,7 +232,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
           <label className="grid gap-2 text-sm text-zinc-300">
             Tamanho
             <select
-              className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-900 px-3"
+              className="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
               value={layout.size}
               onChange={(event) => updateLayout({ size: event.target.value as ThumbnailSize })}
             >
@@ -242,7 +242,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
             </select>
           </label>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-700 bg-zinc-900/70 p-3 text-sm text-zinc-300">
+          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-300">
             <input
               type="checkbox"
               className="mt-0.5 h-4 w-4 accent-blue-500"
