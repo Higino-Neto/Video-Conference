@@ -1,6 +1,6 @@
 import { RoomAudioRenderer, RoomContext } from '@livekit/components-react';
 import { Headphones, MessageCircleQuestion, Share2, ShieldCheck, UsersRound } from 'lucide-react';
-import { ConnectionState, RoomEvent } from 'livekit-client';
+import { ConnectionState, RoomEvent, Track } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AdmissionDecision,
@@ -64,7 +64,7 @@ export function CallPage({ session, roomId, preferences, onLeave }: CallPageProp
         await room.prepareConnection(session.serverUrl, session.participantToken);
         await room.connect(session.serverUrl, session.participantToken, {
           autoSubscribe: true,
-          maxRetries: 3,
+          maxRetries: 5,
           websocketTimeout: 15_000,
           peerConnectionTimeout: 15_000,
         });
@@ -108,8 +108,30 @@ export function CallPage({ session, roomId, preferences, onLeave }: CallPageProp
       }
     });
 
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void room.localParticipant
+          .setCameraEnabled(preferences.cameraEnabled)
+          .catch((err) =>
+            logger.warn('Failed to restore camera on visibility', {
+              message: err instanceof Error ? err.message : 'unknown',
+            }),
+          );
+        void room.localParticipant
+          .setMicrophoneEnabled(preferences.microphoneEnabled)
+          .catch((err) =>
+            logger.warn('Failed to restore microphone on visibility', {
+              message: err instanceof Error ? err.message : 'unknown',
+            }),
+          );
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
     return () => {
       active = false;
+      document.removeEventListener('visibilitychange', handleVisibility);
       lifecycle.current = lifecycle.current.then(() => room.disconnect(true));
     };
   }, [

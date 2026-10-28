@@ -132,12 +132,25 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
     const publication = room.localParticipant.getTrackPublication(Track.Source.Camera);
 
     try {
-      await publication?.videoTrack?.restartTrack({
+      const track = publication?.videoTrack;
+      if (track && typeof track.restartTrack === 'function') {
+        await track.restartTrack({
+          resolution:
+            value === '1080p' ? VideoPresets.h1080.resolution : VideoPresets.h720.resolution,
+          frameRate: 30,
+        });
+        return;
+      }
+      // Fallback: if restart not possible, try to re-publish with new constraints
+      const wasEnabled = room.localParticipant.isCameraEnabled;
+      if (wasEnabled) {
+        await room.localParticipant.setCameraEnabled(false);
+      }
+      await room.localParticipant.setCameraEnabled(true, {
         resolution:
           value === '1080p' ? VideoPresets.h1080.resolution : VideoPresets.h720.resolution,
         frameRate: 30,
       });
-
     } catch {
       onError(
         'O hardware ou navegador não aceitou essa resolução. A qualidade anterior foi mantida.',
@@ -145,6 +158,17 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
         'Qualidade não suportada',
       );
       setQuality(previousQuality);
+      try {
+        const publication2 = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (!publication2 && room.localParticipant.isCameraEnabled) {
+          await room.localParticipant.setCameraEnabled(false);
+        }
+        if (room.localParticipant.isCameraEnabled === false) {
+          await room.localParticipant.setCameraEnabled(true);
+        }
+      } catch {
+        // ignore recovery errors
+      }
     }
   }
 
