@@ -445,14 +445,14 @@ function CallExperience({
           </div>
         </div>
       </header>
-      <ActiveQuestion
+      {/* <ActiveQuestion
         // key={questionsOpen ? 'hidden' : (questionState.activeQuestion?.id ?? 'empty')}
         // question={questionsOpen ? null : questionState.activeQuestion}
                 key={questionState.activeQuestion?.id ?? 'empty'}
         question={questionState.activeQuestion}
-      />
+      /> */}
 
-      <div className="absolute inset-x-0 bottom-0 top-16">
+      <div className="mx-6 absolute inset-x-0 bottom-0 top-16">
         {showStage ? (
           <VideoStage layout={thumbnailLayout} />
         ) : (
