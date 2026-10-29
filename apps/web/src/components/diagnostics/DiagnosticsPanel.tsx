@@ -8,7 +8,7 @@ interface DiagnosticsPanelProps {
 
 export function DiagnosticsPanel({ snapshot, onClose }: DiagnosticsPanelProps) {
   return (
-    <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-zinc-800 p-6">
+    <aside className="fixed bg-zinc-800 inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-zinc-800 p-6">
       <div className="mb-7 flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
@@ -40,10 +40,10 @@ export function DiagnosticsPanel({ snapshot, onClose }: DiagnosticsPanelProps) {
       />
       <MediaSection title="Video" media={snapshot.video} />
       <MediaSection title="Audio" media={snapshot.audio} />
-      <p className="mt-6 text-xs leading-relaxed text-zinc-600">
+      {/* <p className="mt-6 text-xs leading-relaxed text-zinc-600">
         Valores ausentes não são estimados. Transporte é derivado do par ICE selecionado publicado
         pelo RTCStatsReport; em alguns navegadores ele pode ficar indisponível.
-      </p>
+      </p> */}
     </aside>
   );
 }

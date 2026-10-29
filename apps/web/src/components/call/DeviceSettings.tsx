@@ -294,10 +294,10 @@ export function DeviceSettings({
             disabled={Boolean(processingSwitching)}
             onChange={(checked) => void changeAudioProcessing('autoGainControl', checked)}
           />
-          <p className="text-xs leading-relaxed text-zinc-500">
+          {/* <p className="text-xs leading-relaxed text-zinc-500">
             A disponibilidade de cada recurso depende do navegador e do microfone. As alterações
             valem imediatamente durante a chamada.
-          </p>
+          </p> */}
         </div>
       </section>
       <section className="mt-6 border-t border-zinc-700/70 pt-5">
@@ -316,7 +316,6 @@ export function DeviceSettings({
         <div className="grid gap-5">
           <VolumeSlider
             label="Seu microfone"
-            description="Ajusta o quanto os outros participantes ouvem você. Acima de 100% pode distorcer o áudio."
             value={microphoneGain}
             onChange={onMicrophoneGainChange}
           />
@@ -383,10 +382,10 @@ export function DeviceSettings({
               onChange={(event) => updateLayout({ overlay: event.target.checked })}
             />
             <span>
-              <strong className="block text-zinc-100">Sobrepor ao vídeo principal</strong>
-              <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
+              <a className="block text-zinc-100 text-sm">Sobrepor miniaturas ao vídeo principal</a>
+              {/* <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
                 Desative para reservar espaço e nunca cobrir a pessoa ou apresentação em foco.
-              </span>
+              </span> */}
             </span>
           </label>
         </div>
@@ -451,8 +450,8 @@ function ProcessingToggle({
         onChange={(event) => onChange(event.target.checked)}
       />
       <span>
-        <strong className="block text-zinc-100">{label}</strong>
-        <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{description}</span>
+        <span className="block text-zinc-100">{label}</span>
+        {/* <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{description}</span> */}
       </span>
     </label>
   );
