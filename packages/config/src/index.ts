@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   audioEchoCancellation: 'ufmg.audioEchoCancellation',
   audioNoiseSuppression: 'ufmg.audioNoiseSuppression',
   audioAutoGainControl: 'ufmg.audioAutoGainControl',
+  microphoneGain: 'ufmg.microphoneGain',
   joinPreferences: 'ufmg.joinPreferences',
   lastCall: 'ufmg.lastCall',
 } as const;

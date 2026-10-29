@@ -1,6 +1,6 @@
 import { RoomAudioRenderer, RoomContext, useChat } from '@livekit/components-react';
 import { Headphones, MessageSquare, Share2, ShieldCheck, UsersRound } from 'lucide-react';
-import { ConnectionState, RoomEvent } from 'livekit-client';
+import { ConnectionState, RoomEvent, Track, type LocalTrackPublication } from 'livekit-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AdmissionDecision,
@@ -39,6 +39,14 @@ import {
   saveAudioProcessingPreferences,
   type AudioProcessingPreferences,
 } from '../lib/webrtc/audioProcessing.js';
+import {
+  applyMicrophoneGain,
+  applyRemoteParticipantVolumes,
+  clampVolume,
+  DEFAULT_VOLUME,
+  loadMicrophoneGain,
+  saveMicrophoneGain,
+} from '../lib/webrtc/audioVolume.js';
 import { detectCapabilities } from '../lib/webrtc/capabilities.js';
 import type { JoinPreferences } from './LobbyPage.js';
 
@@ -232,6 +240,44 @@ function CallExperience({
     },
     [audioProcessing, notify, room],
   );
+  const [microphoneGain, setMicrophoneGain] = useState(loadMicrophoneGain);
+  const [remoteVolumes, setRemoteVolumes] = useState<Record<string, number>>({});
+  const updateMicrophoneGain = useCallback((value: number) => {
+    const gain = clampVolume(value);
+    setMicrophoneGain(gain);
+    saveMicrophoneGain(gain);
+  }, []);
+  const updateParticipantVolume = useCallback((identity: string, value: number) => {
+    setRemoteVolumes((current) => ({ ...current, [identity]: clampVolume(value) }));
+  }, []);
+  const resetVolumes = useCallback(() => {
+    setMicrophoneGain(DEFAULT_VOLUME);
+    saveMicrophoneGain(DEFAULT_VOLUME);
+    setRemoteVolumes({});
+  }, []);
+
+  useEffect(() => {
+    const apply = () => {
+      void applyMicrophoneGain(room, microphoneGain).catch((error) => {
+        logger.warn('Failed to apply microphone gain', {
+          message: error instanceof Error ? error.message : 'unknown',
+        });
+      });
+    };
+    const handlePublished = (publication: LocalTrackPublication) => {
+      if (publication.source === Track.Source.Microphone) apply();
+    };
+    apply();
+    room.on(RoomEvent.LocalTrackPublished, handlePublished);
+    return () => {
+      room.off(RoomEvent.LocalTrackPublished, handlePublished);
+    };
+  }, [microphoneGain, room]);
+
+  useEffect(() => {
+    applyRemoteParticipantVolumes(room, remoteVolumes);
+  }, [participantRevision, remoteVolumes, room]);
+
   useKeyboardShortcuts(toggleDiagnostics);
 
   // Tracks how many chat messages we'd already accounted for last time the effect below got called so we can tell how many are new
@@ -295,6 +341,15 @@ function CallExperience({
       isAdmin: participant.attributes['ufmg.role'] === 'admin',
     }));
   }, [participantRevision, room]);
+  const volumeParticipants = useMemo(
+    () =>
+      managedParticipants.map(({ identity, name }) => ({
+        identity,
+        name,
+        volume: remoteVolumes[identity] ?? DEFAULT_VOLUME,
+      })),
+    [managedParticipants, remoteVolumes],
+  );
   const questionAuthors = useMemo<QuestionAuthor[]>(
     () =>
       [
@@ -605,6 +660,11 @@ function CallExperience({
           onLayoutChange={updateThumbnailLayout}
           audioProcessing={audioProcessing}
           onAudioProcessingChange={updateAudioProcessing}
+          microphoneGain={microphoneGain}
+          onMicrophoneGainChange={updateMicrophoneGain}
+          participants={volumeParticipants}
+          onParticipantVolumeChange={updateParticipantVolume}
+          onResetVolumes={resetVolumes}
           onClose={() => setSettingsOpen(false)}
           onError={notify}
         />

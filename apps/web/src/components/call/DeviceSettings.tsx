@@ -1,4 +1,4 @@
-import { AudioLines, LayoutGrid, LoaderCircle, X } from 'lucide-react';
+import { AudioLines, LayoutGrid, LoaderCircle, RotateCcw, Volume2, X } from 'lucide-react';
 import { RoomEvent, Track, VideoPresets, supportsAudioOutputSelection } from 'livekit-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoomContext } from '@livekit/components-react';
@@ -10,6 +10,7 @@ import {
   type ThumbnailSize,
 } from '../../lib/storage.js';
 import type { AudioProcessingPreferences } from '../../lib/webrtc/audioProcessing.js';
+import { MAX_VOLUME, MIN_VOLUME } from '../../lib/webrtc/audioVolume.js';
 import { restorePreviousDevice } from '../../lib/webrtc/callMedia.js';
 import { DeviceSelect } from '../lobby/DeviceSelect.js';
 import type { ToastTone } from './CallToast.js';
@@ -21,6 +22,17 @@ interface DeviceSettingsProps {
   onLayoutChange(layout: ThumbnailLayoutPreferences): void;
   audioProcessing: AudioProcessingPreferences;
   onAudioProcessingChange(patch: Partial<AudioProcessingPreferences>): void | Promise<void>;
+  microphoneGain: number;
+  onMicrophoneGainChange(value: number): void;
+  participants: ParticipantVolume[];
+  onParticipantVolumeChange(identity: string, value: number): void;
+  onResetVolumes(): void;
+}
+
+interface ParticipantVolume {
+  identity: string;
+  name: string;
+  volume: number;
 }
 
 type SelectedDevices = Partial<Record<MediaDeviceKind, string>>;
@@ -32,6 +44,11 @@ export function DeviceSettings({
   onLayoutChange,
   audioProcessing,
   onAudioProcessingChange,
+  microphoneGain,
+  onMicrophoneGainChange,
+  participants,
+  onParticipantVolumeChange,
+  onResetVolumes,
 }: DeviceSettingsProps) {
   const room = useRoomContext();
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -284,6 +301,47 @@ export function DeviceSettings({
         </div>
       </section>
       <section className="mt-6 border-t border-zinc-700/70 pt-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+            <Volume2 size={16} /> Volume
+          </h3>
+          <button
+            type="button"
+            className="ui-motion flex items-center gap-1 rounded-md border border-zinc-700 px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800"
+            onClick={onResetVolumes}
+          >
+            <RotateCcw size={12} /> Restaurar
+          </button>
+        </div>
+        <div className="grid gap-5">
+          <VolumeSlider
+            label="Seu microfone"
+            description="Ajusta o quanto os outros participantes ouvem você. Acima de 100% pode distorcer o áudio."
+            value={microphoneGain}
+            onChange={onMicrophoneGainChange}
+          />
+          <div className="grid gap-4">
+            <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+              Outros participantes
+            </h4>
+            {participants.length === 0 ? (
+              <p className="text-xs leading-relaxed text-zinc-500">
+                Ninguém mais está na chamada no momento.
+              </p>
+            ) : (
+              participants.map((participant) => (
+                <VolumeSlider
+                  key={participant.identity}
+                  label={participant.name}
+                  value={participant.volume}
+                  onChange={(value) => onParticipantVolumeChange(participant.identity, value)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+      <section className="mt-6 border-t border-zinc-700/70 pt-5">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
           <LayoutGrid size={16} /> Layout das miniaturas
         </h3>
@@ -334,6 +392,39 @@ export function DeviceSettings({
         </div>
       </section>
     </aside>
+  );
+}
+
+function VolumeSlider({
+  label,
+  description,
+  value,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  value: number;
+  onChange(value: number): void;
+}) {
+  const percent = Math.round(value * 100);
+
+  return (
+    <label className="grid gap-2 text-sm text-zinc-300">
+      <span className="flex items-center justify-between gap-3">
+        <span className="truncate font-medium text-zinc-100">{label}</span>
+        <span className="text-xs tabular-nums text-zinc-400">{percent}%</span>
+      </span>
+      <input
+        type="range"
+        min={Math.round(MIN_VOLUME * 100)}
+        max={Math.round(MAX_VOLUME * 100)}
+        step={5}
+        value={percent}
+        onChange={(event) => onChange(Number(event.target.value) / 100)}
+        className="h-2 w-full cursor-pointer accent-blue-500"
+      />
+      {description && <span className="text-xs leading-relaxed text-zinc-500">{description}</span>}
+    </label>
   );
 }
 

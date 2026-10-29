@@ -23,6 +23,9 @@ export function createCallRoom(
     disconnectOnPageLeave: true,
     stopLocalTrackOnUnpublish: true,
     singlePeerConnection: true,
+    // Web Audio is required to boost remote participants above 100%; the
+    // plain <audio> element clamps volume to 1.0.
+    webAudioMix: true,
     audioCaptureDefaults: {
       ...(preferences.microphoneId ? { deviceId: preferences.microphoneId } : {}),
       ...toAudioCaptureOptions(audioProcessing),
