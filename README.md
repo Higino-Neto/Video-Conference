@@ -73,9 +73,8 @@ recente. O PostgreSQL ou o arquivo local é a fonte de verdade; mensagens de dad
 avisam os clientes sobre atualizações, com polling periódico como recuperação.
 
 ### Estrutura do projeto V1.0.0
-
-````
-Video-Conferencia-UFMG/
+```
+Video-Conference/
 │
 ├── api/
 │   └── [...path].ts

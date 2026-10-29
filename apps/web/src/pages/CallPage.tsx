@@ -571,6 +571,7 @@ function CallExperience({
           <button
             type="button"
             className="ui-motion relative flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
+            className="ui-motion relative flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
             aria-label="Chat"
             title="Chat"
             onClick={toggleChat}
