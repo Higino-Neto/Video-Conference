@@ -9,7 +9,6 @@ import type {
   QuestionQueueResponse,
   TokenResponse,
 } from '@ufmg/shared';
-import { ActiveQuestion } from '../components/call/ActiveQuestion.js';
 import { CallControls } from '../components/call/CallControls.js';
 import { CallToast, type CallToastMessage, type ToastTone } from '../components/call/CallToast.js';
 import { ChatPanel } from '../components/call/ChatPanel.js';
@@ -111,13 +110,11 @@ export function CallPage({ session, roomId, preferences, onLeave }: CallPageProp
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        void room.localParticipant
-          .setCameraEnabled(preferences.cameraEnabled)
-          .catch((err) =>
-            logger.warn('Failed to restore camera on visibility', {
-              message: err instanceof Error ? err.message : 'unknown',
-            }),
-          );
+        void room.localParticipant.setCameraEnabled(preferences.cameraEnabled).catch((err) =>
+          logger.warn('Failed to restore camera on visibility', {
+            message: err instanceof Error ? err.message : 'unknown',
+          }),
+        );
         void room.localParticipant
           .setMicrophoneEnabled(preferences.microphoneEnabled)
           .catch((err) =>
@@ -185,9 +182,17 @@ function CallExperience({
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [managementOpen, setManagementOpen] = useState(false);
+  const [questionsOpen, setQuestionsOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
-  const { chatMessages, send: sendChatMessage, isSending: isSendingChatMessage } = useChat();
+  // `useChat` rebuilds its subscription whenever the options object changes.
+  // Keep the reference stable so the message history is not reset on every render.
+  const chatOptions = useMemo(() => ({ room }), [room]);
+  const {
+    chatMessages,
+    send: sendChatMessage,
+    isSending: isSendingChatMessage,
+  } = useChat(chatOptions);
   const [participantRevision, setParticipantRevision] = useState(0);
   const [pendingAdmissions, setPendingAdmissions] = useState<PendingAdmission[]>([]);
   const [audioBlocked, setAudioBlocked] = useState(false);
@@ -228,7 +233,6 @@ function CallExperience({
       return nextOpen;
     });
   }, []);
-
 
   useEffect(() => {
     const update = () => setAudioBlocked(!room.canPlaybackAudio);
@@ -585,6 +589,7 @@ function CallExperience({
           send={sendChatMessage}
           isSending={isSendingChatMessage}
           onClose={() => setChatOpen(false)}
+          onError={notify}
         />
       )}
       {isAdmin && managementOpen && (
