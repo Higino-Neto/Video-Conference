@@ -13,6 +13,9 @@ export const STORAGE_KEYS = {
   thumbnailPosition: 'ufmg.thumbnailPosition',
   thumbnailSize: 'ufmg.thumbnailSize',
   thumbnailOverlay: 'ufmg.thumbnailOverlay',
+  audioEchoCancellation: 'ufmg.audioEchoCancellation',
+  audioNoiseSuppression: 'ufmg.audioNoiseSuppression',
+  audioAutoGainControl: 'ufmg.audioAutoGainControl',
   joinPreferences: 'ufmg.joinPreferences',
   lastCall: 'ufmg.lastCall',
 } as const;

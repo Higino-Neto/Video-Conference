@@ -33,6 +33,12 @@ import {
   saveThumbnailLayoutPreferences,
   type ThumbnailLayoutPreferences,
 } from '../lib/storage.js';
+import {
+  applyAudioProcessing,
+  loadAudioProcessingPreferences,
+  saveAudioProcessingPreferences,
+  type AudioProcessingPreferences,
+} from '../lib/webrtc/audioProcessing.js';
 import { detectCapabilities } from '../lib/webrtc/capabilities.js';
 import type { JoinPreferences } from './LobbyPage.js';
 
@@ -205,6 +211,27 @@ function CallExperience({
     setThumbnailLayout(layout);
     saveThumbnailLayoutPreferences(layout);
   }, []);
+  const [audioProcessing, setAudioProcessing] = useState(loadAudioProcessingPreferences);
+  const updateAudioProcessing = useCallback(
+    async (patch: Partial<AudioProcessingPreferences>) => {
+      const next = { ...audioProcessing, ...patch };
+      setAudioProcessing(next);
+      saveAudioProcessingPreferences(next);
+      try {
+        await applyAudioProcessing(room, next);
+      } catch (error) {
+        logger.warn('Failed to apply audio processing preferences', {
+          message: error instanceof Error ? error.message : 'unknown',
+        });
+        notify(
+          'O navegador não conseguiu aplicar essa opção de áudio. A chamada continua ativa.',
+          'danger',
+          'Processamento de áudio',
+        );
+      }
+    },
+    [audioProcessing, notify, room],
+  );
   useKeyboardShortcuts(toggleDiagnostics);
 
   // Tracks how many chat messages we'd already accounted for last time the effect below got called so we can tell how many are new
@@ -576,6 +603,8 @@ function CallExperience({
         <DeviceSettings
           layout={thumbnailLayout}
           onLayoutChange={updateThumbnailLayout}
+          audioProcessing={audioProcessing}
+          onAudioProcessingChange={updateAudioProcessing}
           onClose={() => setSettingsOpen(false)}
           onError={notify}
         />

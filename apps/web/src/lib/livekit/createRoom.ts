@@ -7,8 +7,16 @@ import {
   supportsDynacast,
 } from 'livekit-client';
 import type { JoinPreferences } from '../../pages/LobbyPage.js';
+import {
+  loadAudioProcessingPreferences,
+  toAudioCaptureOptions,
+  type AudioProcessingPreferences,
+} from '../webrtc/audioProcessing.js';
 
-export function createCallRoom(preferences: JoinPreferences) {
+export function createCallRoom(
+  preferences: JoinPreferences,
+  audioProcessing: AudioProcessingPreferences = loadAudioProcessingPreferences(),
+) {
   return new Room({
     adaptiveStream: supportsAdaptiveStream(),
     dynacast: supportsDynacast(),
@@ -17,9 +25,7 @@ export function createCallRoom(preferences: JoinPreferences) {
     singlePeerConnection: true,
     audioCaptureDefaults: {
       ...(preferences.microphoneId ? { deviceId: preferences.microphoneId } : {}),
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
+      ...toAudioCaptureOptions(audioProcessing),
       channelCount: 1,
     },
     audioOutput: preferences.speakerId ? { deviceId: preferences.speakerId } : {},

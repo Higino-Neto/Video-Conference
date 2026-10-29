@@ -1,4 +1,4 @@
-import { LayoutGrid, LoaderCircle, X } from 'lucide-react';
+import { AudioLines, LayoutGrid, LoaderCircle, X } from 'lucide-react';
 import { RoomEvent, Track, VideoPresets, supportsAudioOutputSelection } from 'livekit-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoomContext } from '@livekit/components-react';
@@ -9,6 +9,7 @@ import {
   type ThumbnailPosition,
   type ThumbnailSize,
 } from '../../lib/storage.js';
+import type { AudioProcessingPreferences } from '../../lib/webrtc/audioProcessing.js';
 import { restorePreviousDevice } from '../../lib/webrtc/callMedia.js';
 import { DeviceSelect } from '../lobby/DeviceSelect.js';
 import type { ToastTone } from './CallToast.js';
@@ -18,17 +19,28 @@ interface DeviceSettingsProps {
   onError: (message: string, tone?: ToastTone, title?: string) => void;
   layout: ThumbnailLayoutPreferences;
   onLayoutChange(layout: ThumbnailLayoutPreferences): void;
+  audioProcessing: AudioProcessingPreferences;
+  onAudioProcessingChange(patch: Partial<AudioProcessingPreferences>): void | Promise<void>;
 }
 
 type SelectedDevices = Partial<Record<MediaDeviceKind, string>>;
 
-export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: DeviceSettingsProps) {
+export function DeviceSettings({
+  onClose,
+  onError,
+  layout,
+  onLayoutChange,
+  audioProcessing,
+  onAudioProcessingChange,
+}: DeviceSettingsProps) {
   const room = useRoomContext();
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [quality, setQuality] = useState<'720p' | '1080p'>(
     () => loadDevicePreferences().preferredVideoQuality,
   );
   const [switching, setSwitching] = useState<MediaDeviceKind>();
+  const [processingSwitching, setProcessingSwitching] =
+    useState<keyof AudioProcessingPreferences>();
   const [selected, setSelected] = useState<SelectedDevices>(() => ({
     audioinput: room.getActiveDevice('audioinput') ?? '',
     videoinput: room.getActiveDevice('videoinput') ?? '',
@@ -52,7 +64,6 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
 
       const all = await navigator.mediaDevices.enumerateDevices();
       if (active) setDevices(all);
-
     };
     void load().catch(() =>
       onError(
@@ -119,7 +130,6 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
         'danger',
         restored ? 'Troca de dispositivo desfeita' : 'Dispositivo indisponível',
       );
-
     } finally {
       setSwitching(undefined);
     }
@@ -169,6 +179,16 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
       } catch {
         // ignore recovery errors
       }
+    }
+  }
+
+  async function changeAudioProcessing(key: keyof AudioProcessingPreferences, enabled: boolean) {
+    if (processingSwitching) return;
+    setProcessingSwitching(key);
+    try {
+      await onAudioProcessingChange({ [key]: enabled });
+    } finally {
+      setProcessingSwitching(undefined);
     }
   }
 
@@ -230,8 +250,39 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
             <option value="1080p">1080p / 30 fps — rede rápida</option>
           </select>
         </label>
-
       </div>
+      <section className="mt-6 border-t border-zinc-700/70 pt-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+          <AudioLines size={16} /> Processamento de áudio
+        </h3>
+        <div className="grid gap-3" aria-busy={Boolean(processingSwitching)}>
+          <ProcessingToggle
+            label="Cancelamento de eco"
+            description="Evita que o som dos alto-falantes volte pelo microfone."
+            checked={audioProcessing.echoCancellation}
+            disabled={Boolean(processingSwitching)}
+            onChange={(checked) => void changeAudioProcessing('echoCancellation', checked)}
+          />
+          <ProcessingToggle
+            label="Supressão de ruído"
+            description="Reduz ruídos de fundo constantes, como ventilador e teclado."
+            checked={audioProcessing.noiseSuppression}
+            disabled={Boolean(processingSwitching)}
+            onChange={(checked) => void changeAudioProcessing('noiseSuppression', checked)}
+          />
+          <ProcessingToggle
+            label="Ganho automático"
+            description="Ajusta o volume da sua voz automaticamente."
+            checked={audioProcessing.autoGainControl}
+            disabled={Boolean(processingSwitching)}
+            onChange={(checked) => void changeAudioProcessing('autoGainControl', checked)}
+          />
+          <p className="text-xs leading-relaxed text-zinc-500">
+            A disponibilidade de cada recurso depende do navegador e do microfone. As alterações
+            valem imediatamente durante a chamada.
+          </p>
+        </div>
+      </section>
       <section className="mt-6 border-t border-zinc-700/70 pt-5">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
           <LayoutGrid size={16} /> Layout das miniaturas
@@ -280,9 +331,38 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
               </span>
             </span>
           </label>
-          
         </div>
       </section>
     </aside>
+  );
+}
+
+function ProcessingToggle({
+  label,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange(checked: boolean): void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-300">
+      <input
+        type="checkbox"
+        className="mt-0.5 h-4 w-4 accent-blue-500"
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span>
+        <strong className="block text-zinc-100">{label}</strong>
+        <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{description}</span>
+      </span>
+    </label>
   );
 }

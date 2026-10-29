@@ -4,6 +4,10 @@ import {
   loadJoinPreferences,
   saveDevicePreference,
 } from '../lib/storage.js';
+import {
+  loadAudioProcessingPreferences,
+  toAudioCaptureOptions,
+} from '../lib/webrtc/audioProcessing.js';
 import { friendlyMediaError } from '../lib/webrtc/mediaErrors.js';
 
 export interface DeviceState {
@@ -86,9 +90,7 @@ export function useMediaDevices() {
           ...(preferences.current.microphoneId
             ? { deviceId: { exact: preferences.current.microphoneId } }
             : {}),
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+          ...toAudioCaptureOptions(loadAudioProcessingPreferences()),
           channelCount: 1,
         });
         const videoConstraints = (): MediaTrackConstraints => ({
