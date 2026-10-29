@@ -587,7 +587,7 @@ function CallExperience({
           </button>
           <button
             type="button"
-            className="ui-motion flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
+            className="ui-motion flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
             onClick={() => void shareCall()}
           >
             <Share2 size={15} />

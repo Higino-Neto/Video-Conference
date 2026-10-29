@@ -41,7 +41,6 @@ export function ParticipantVideo({
       data-participant-id={participant.identity}
       className="relative h-full w-full overflow-hidden bg-zinc-700 rounded-md"
     >
-      {/* Espaçamento externo real entre o vídeo e as bordas da área disponível. */}
       <div
         className={`relative mx-auto h-full w-[calc(100%-48px)] overflow-hidden bg-zinc-700 ${
           compact ? 'rounded-md' : 'rounded-md'
@@ -57,7 +56,7 @@ export function ParticipantVideo({
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-zinc-700">
             <div
-              className={`flex items-center justify-center rounded-md bg-[#282A2F] font-medium tracking-wide text-zinc-100 ${
+              className={`flex items-center justify-center rounded-full bg-[#282A2F] font-medium tracking-wide text-zinc-100 ${
                 compact ? 'h-14 w-14 text-lg' : 'h-24 w-24 text-3xl'
               }`}
               aria-label={`Iniciais de ${displayName}`}

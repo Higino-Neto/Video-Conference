@@ -46,7 +46,7 @@ export function ChatPanel({ messages, send, isSending, onClose, onError }: ChatP
         </div>
         <button
           aria-label="Fechar chat"
-          className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+          className="rounded-md p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white"
           onClick={onClose}
         >
           <X size={20} />
@@ -82,13 +82,13 @@ export function ChatPanel({ messages, send, isSending, onClose, onError }: ChatP
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="Escreva uma mensagem…"
-            className="flex-1 rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
+            className="flex-1 rounded-md border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none"
           />
           <button
             type="submit"
             aria-label="Enviar mensagem"
             disabled={!draft.trim() || isSending}
-            className="ui-motion flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
+            className="ui-motion flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Send size={16} />
           </button>
