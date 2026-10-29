@@ -94,8 +94,8 @@ export function ParticipantManagement({
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
         {pendingAdmissions.length > 0 && (
-          <section className="rounded-md border border-amber-700/40 bg-amber-950/20 p-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-amber-200">
+          <section className="rounded-md border border-zinc-700/40 bg-zinc-950/20 p-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-100">
               Pedidos de entrada
             </h3>
             <div className="mt-2 space-y-2">
@@ -156,7 +156,7 @@ export function ParticipantManagement({
                   {participant.name}
                 </span>
                 {participant.isAdmin && (
-                  <span className="flex items-center gap-1 rounded-md bg-amber-400/15 px-2 py-1 text-[11px] text-amber-200">
+                  <span className="flex items-center gap-1 rounded-md bg-zinc-400/15 px-2 py-1 text-[11px] text-zinc-200">
                     <Crown size={12} /> Admin
                   </span>
                 )}

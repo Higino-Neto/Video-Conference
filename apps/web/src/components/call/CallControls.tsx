@@ -178,12 +178,14 @@ export function CallControls({
       >
         <PhoneOff size={21} />
       </button>
+      {import.meta.env.DEV && (
       <button
         className="ui-motion absolute right-3 top-1 m-3 mt-5 text-[10px] text-zinc-600 hover:text-zinc-300"
         onClick={onDiagnostics}
       >
         Diagnóstico
       </button>
+      )}
     </div>
   );
 }

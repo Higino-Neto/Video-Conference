@@ -10,7 +10,7 @@ interface CheckItemProps {
 function CheckItem({ label, status, detail }: CheckItemProps) {
   const icon = {
     ok: <Check size={16} className="text-positive" />,
-    warning: <AlertTriangle size={16} className="text-amber-400" />,
+    warning: <AlertTriangle size={16} className="text-zinc-400" />,
     error: <X size={16} className="text-red-400" />,
     pending: <Clock3 size={16} className="text-zinc-500" />,
   }[status];

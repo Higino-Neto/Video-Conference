@@ -210,7 +210,7 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
               httpRttMs={network.httpRttMs}
             />
             {network.backendReachable && network.quality === 'poor' && !network.running && (
-              <div className="rounded-md border border-amber-900/50 bg-amber-950/20 p-4 text-sm leading-relaxed text-amber-100">
+              <div className="rounded-md border border-zinc-900/50 bg-zinc-950/20 p-4 text-sm leading-relaxed text-zinc-100">
                 <strong>Rede instável detectada.</strong>
                 <br />
                 Use Ethernet, desative VPN se possível e pause downloads antes de entrar.
@@ -227,10 +227,10 @@ export function LobbyPage({ roomId, joining, approvalPending, joinError, onJoin 
             {approvalPending && (
               <div
                 role="status"
-                className="rounded-md border border-amber-800/50 bg-amber-950/25 p-4 text-sm text-amber-100"
+                className="rounded-md border border-zinc-800/50 bg-zinc-950/25 p-4 text-sm text-zinc-100"
               >
                 <strong>Aguardando aprovação</strong>
-                <p className="mt-1 text-xs leading-relaxed text-amber-200/70">
+                <p className="mt-1 text-xs leading-relaxed text-zinc-200/70">
                   Um administrador recebeu sua solicitação. Esta tela entrará na chamada
                   automaticamente quando ela for aceita.
                 </p>
