@@ -714,7 +714,7 @@ function qualityColor(quality: string) {
     : quality === 'good'
       ? 'bg-lime-400'
       : quality === 'fair'
-        ? 'bg-amber-400'
+        ? 'bg-zinc-400'
         : quality === 'poor'
           ? 'bg-red-500'
           : 'bg-zinc-600';

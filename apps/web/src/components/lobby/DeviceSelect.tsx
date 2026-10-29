@@ -97,7 +97,7 @@ export function DeviceSelect({
       </span>
 
       {selectedDeviceIsMissing && (
-        <span role="status" className="text-xs text-amber-400">
+        <span role="status" className="text-xs text-zinc-400">
           O dispositivo selecionado não está mais disponível.
         </span>
       )}

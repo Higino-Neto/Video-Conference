@@ -206,13 +206,13 @@ export function QuestionManagement({
       {error && (
         <div
           role="status"
-          className="flex items-start gap-2 border-b border-amber-700/35 bg-amber-950/25 px-4 py-3 text-xs text-amber-100"
+          className="flex items-start gap-2 border-b border-zinc-700/35 bg-zinc-950/25 px-4 py-3 text-xs text-zinc-100"
         >
           <AlertCircle className="mt-0.5 shrink-0" size={15} />
           <span className="min-w-0 flex-1">{error}</span>
           <button
             type="button"
-            className="shrink-0 font-semibold text-amber-200 hover:text-white"
+            className="shrink-0 font-semibold text-zinc-200 hover:text-white"
             onClick={() => void onRefresh().catch(() => undefined)}
           >
             Tentar novamente
