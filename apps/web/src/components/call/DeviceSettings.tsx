@@ -1,4 +1,4 @@
-import { LayoutGrid, LoaderCircle, X } from 'lucide-react';
+import { AudioLines, LayoutGrid, LoaderCircle, RotateCcw, Volume2, X } from 'lucide-react';
 import { RoomEvent, Track, VideoPresets, supportsAudioOutputSelection } from 'livekit-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRoomContext } from '@livekit/components-react';
@@ -9,6 +9,8 @@ import {
   type ThumbnailPosition,
   type ThumbnailSize,
 } from '../../lib/storage.js';
+import type { AudioProcessingPreferences } from '../../lib/webrtc/audioProcessing.js';
+import { MAX_VOLUME, MIN_VOLUME } from '../../lib/webrtc/audioVolume.js';
 import { restorePreviousDevice } from '../../lib/webrtc/callMedia.js';
 import { DeviceSelect } from '../lobby/DeviceSelect.js';
 import type { ToastTone } from './CallToast.js';
@@ -18,17 +20,44 @@ interface DeviceSettingsProps {
   onError: (message: string, tone?: ToastTone, title?: string) => void;
   layout: ThumbnailLayoutPreferences;
   onLayoutChange(layout: ThumbnailLayoutPreferences): void;
+  audioProcessing: AudioProcessingPreferences;
+  onAudioProcessingChange(patch: Partial<AudioProcessingPreferences>): void | Promise<void>;
+  microphoneGain: number;
+  onMicrophoneGainChange(value: number): void;
+  participants: ParticipantVolume[];
+  onParticipantVolumeChange(identity: string, value: number): void;
+  onResetVolumes(): void;
+}
+
+interface ParticipantVolume {
+  identity: string;
+  name: string;
+  volume: number;
 }
 
 type SelectedDevices = Partial<Record<MediaDeviceKind, string>>;
 
-export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: DeviceSettingsProps) {
+export function DeviceSettings({
+  onClose,
+  onError,
+  layout,
+  onLayoutChange,
+  audioProcessing,
+  onAudioProcessingChange,
+  microphoneGain,
+  onMicrophoneGainChange,
+  participants,
+  onParticipantVolumeChange,
+  onResetVolumes,
+}: DeviceSettingsProps) {
   const room = useRoomContext();
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [quality, setQuality] = useState<'720p' | '1080p'>(
     () => loadDevicePreferences().preferredVideoQuality,
   );
   const [switching, setSwitching] = useState<MediaDeviceKind>();
+  const [processingSwitching, setProcessingSwitching] =
+    useState<keyof AudioProcessingPreferences>();
   const [selected, setSelected] = useState<SelectedDevices>(() => ({
     audioinput: room.getActiveDevice('audioinput') ?? '',
     videoinput: room.getActiveDevice('videoinput') ?? '',
@@ -52,7 +81,6 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
 
       const all = await navigator.mediaDevices.enumerateDevices();
       if (active) setDevices(all);
-
     };
     void load().catch(() =>
       onError(
@@ -119,7 +147,6 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
         'danger',
         restored ? 'Troca de dispositivo desfeita' : 'Dispositivo indisponível',
       );
-
     } finally {
       setSwitching(undefined);
     }
@@ -132,12 +159,25 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
     const publication = room.localParticipant.getTrackPublication(Track.Source.Camera);
 
     try {
-      await publication?.videoTrack?.restartTrack({
+      const track = publication?.videoTrack;
+      if (track && typeof track.restartTrack === 'function') {
+        await track.restartTrack({
+          resolution:
+            value === '1080p' ? VideoPresets.h1080.resolution : VideoPresets.h720.resolution,
+          frameRate: 30,
+        });
+        return;
+      }
+      // Fallback: if restart not possible, try to re-publish with new constraints
+      const wasEnabled = room.localParticipant.isCameraEnabled;
+      if (wasEnabled) {
+        await room.localParticipant.setCameraEnabled(false);
+      }
+      await room.localParticipant.setCameraEnabled(true, {
         resolution:
           value === '1080p' ? VideoPresets.h1080.resolution : VideoPresets.h720.resolution,
         frameRate: 30,
       });
-
     } catch {
       onError(
         'O hardware ou navegador não aceitou essa resolução. A qualidade anterior foi mantida.',
@@ -145,6 +185,27 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
         'Qualidade não suportada',
       );
       setQuality(previousQuality);
+      try {
+        const publication2 = room.localParticipant.getTrackPublication(Track.Source.Camera);
+        if (!publication2 && room.localParticipant.isCameraEnabled) {
+          await room.localParticipant.setCameraEnabled(false);
+        }
+        if (room.localParticipant.isCameraEnabled === false) {
+          await room.localParticipant.setCameraEnabled(true);
+        }
+      } catch {
+        // ignore recovery errors
+      }
+    }
+  }
+
+  async function changeAudioProcessing(key: keyof AudioProcessingPreferences, enabled: boolean) {
+    if (processingSwitching) return;
+    setProcessingSwitching(key);
+    try {
+      await onAudioProcessingChange({ [key]: enabled });
+    } finally {
+      setProcessingSwitching(undefined);
     }
   }
 
@@ -153,7 +214,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
   }
 
   return (
-    <aside className="surface-enter glass absolute right-4 top-16 z-40 max-h-[calc(100dvh-8rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-2xl border border-zinc-700 p-5 shadow-2xl">
+    <aside className="surface-enter bg-zinc-900 absolute right-4 top-16 z-40 max-h-[calc(100dvh-8rem)] w-[calc(100%-2rem)] max-w-sm overflow-y-auto rounded-md border border-zinc-700 p-5">
       <div className="mb-5 flex items-center justify-between">
         <h2 className="font-semibold">Dispositivos</h2>
         <button aria-label="Fechar configurações" onClick={onClose}>
@@ -162,7 +223,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
       </div>
       <div className="relative grid gap-4" aria-busy={Boolean(switching)}>
         {switching && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-zinc-950/70 text-sm text-zinc-300 backdrop-blur-sm">
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-zinc-950/70 text-sm text-zinc-300 backdrop-blur-sm">
             <LoaderCircle className="mr-2 animate-spin" size={17} /> Testando dispositivo…
           </div>
         )}
@@ -198,7 +259,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
         <label className="grid gap-2 text-sm text-zinc-300">
           Qualidade da câmera
           <select
-            className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-900 px-3"
+            className="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
             value={quality}
             onChange={(event) => void changeQuality(event.target.value as '720p' | '1080p')}
           >
@@ -206,8 +267,79 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
             <option value="1080p">1080p / 30 fps — rede rápida</option>
           </select>
         </label>
-
       </div>
+      <section className="mt-6 border-t border-zinc-700/70 pt-5">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
+          <AudioLines size={16} /> Processamento de áudio
+        </h3>
+        <div className="grid gap-3" aria-busy={Boolean(processingSwitching)}>
+          <ProcessingToggle
+            label="Cancelamento de eco"
+            description="Evita que o som dos alto-falantes volte pelo microfone."
+            checked={audioProcessing.echoCancellation}
+            disabled={Boolean(processingSwitching)}
+            onChange={(checked) => void changeAudioProcessing('echoCancellation', checked)}
+          />
+          <ProcessingToggle
+            label="Supressão de ruído"
+            description="Reduz ruídos de fundo constantes, como ventilador e teclado."
+            checked={audioProcessing.noiseSuppression}
+            disabled={Boolean(processingSwitching)}
+            onChange={(checked) => void changeAudioProcessing('noiseSuppression', checked)}
+          />
+          <ProcessingToggle
+            label="Ganho automático"
+            description="Ajusta o volume da sua voz automaticamente."
+            checked={audioProcessing.autoGainControl}
+            disabled={Boolean(processingSwitching)}
+            onChange={(checked) => void changeAudioProcessing('autoGainControl', checked)}
+          />
+          {/* <p className="text-xs leading-relaxed text-zinc-500">
+            A disponibilidade de cada recurso depende do navegador e do microfone. As alterações
+            valem imediatamente durante a chamada.
+          </p> */}
+        </div>
+      </section>
+      <section className="mt-6 border-t border-zinc-700/70 pt-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+            <Volume2 size={16} /> Volume
+          </h3>
+          <button
+            type="button"
+            className="ui-motion flex items-center gap-1 rounded-md border border-zinc-700 px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800"
+            onClick={onResetVolumes}
+          >
+            <RotateCcw size={12} /> Restaurar
+          </button>
+        </div>
+        <div className="grid gap-5">
+          <VolumeSlider
+            label="Seu microfone"
+            value={microphoneGain}
+            onChange={onMicrophoneGainChange}
+          />
+          <div className="grid gap-4">
+            <h4 className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+              Outros participantes
+            </h4>
+            {participants.length === 0 ? (
+              <p className="text-xs leading-relaxed text-zinc-500">
+                Ninguém mais está na chamada no momento.
+              </p>
+            ) : (
+              participants.map((participant) => (
+                <VolumeSlider
+                  key={participant.identity}
+                  label={participant.name}
+                  value={participant.volume}
+                  onChange={(value) => onParticipantVolumeChange(participant.identity, value)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </section>
       <section className="mt-6 border-t border-zinc-700/70 pt-5">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-zinc-100">
           <LayoutGrid size={16} /> Layout das miniaturas
@@ -216,7 +348,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
           <label className="grid gap-2 text-sm text-zinc-300">
             Posição
             <select
-              className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-900 px-3"
+              className="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
               value={layout.position}
               onChange={(event) =>
                 updateLayout({ position: event.target.value as ThumbnailPosition })
@@ -232,7 +364,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
           <label className="grid gap-2 text-sm text-zinc-300">
             Tamanho
             <select
-              className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-900 px-3"
+              className="min-h-11 rounded-md border border-zinc-700 bg-zinc-900 px-3"
               value={layout.size}
               onChange={(event) => updateLayout({ size: event.target.value as ThumbnailSize })}
             >
@@ -242,7 +374,7 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
             </select>
           </label>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-700 bg-zinc-900/70 p-3 text-sm text-zinc-300">
+          <label className="flex cursor-pointer items-start gap-3 rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-300">
             <input
               type="checkbox"
               className="mt-0.5 h-4 w-4 accent-blue-500"
@@ -250,15 +382,77 @@ export function DeviceSettings({ onClose, onError, layout, onLayoutChange }: Dev
               onChange={(event) => updateLayout({ overlay: event.target.checked })}
             />
             <span>
-              <strong className="block text-zinc-100">Sobrepor ao vídeo principal</strong>
-              <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
+              <a className="block text-zinc-100 text-sm">Sobrepor miniaturas ao vídeo principal</a>
+              {/* <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
                 Desative para reservar espaço e nunca cobrir a pessoa ou apresentação em foco.
-              </span>
+              </span> */}
             </span>
           </label>
-          
         </div>
       </section>
     </aside>
+  );
+}
+
+function VolumeSlider({
+  label,
+  description,
+  value,
+  onChange,
+}: {
+  label: string;
+  description?: string;
+  value: number;
+  onChange(value: number): void;
+}) {
+  const percent = Math.round(value * 100);
+
+  return (
+    <label className="grid gap-2 text-sm text-zinc-300">
+      <span className="flex items-center justify-between gap-3">
+        <span className="truncate font-medium text-zinc-100">{label}</span>
+        <span className="text-xs tabular-nums text-zinc-400">{percent}%</span>
+      </span>
+      <input
+        type="range"
+        min={Math.round(MIN_VOLUME * 100)}
+        max={Math.round(MAX_VOLUME * 100)}
+        step={5}
+        value={percent}
+        onChange={(event) => onChange(Number(event.target.value) / 100)}
+        className="h-2 w-full cursor-pointer accent-blue-500"
+      />
+      {description && <span className="text-xs leading-relaxed text-zinc-500">{description}</span>}
+    </label>
+  );
+}
+
+function ProcessingToggle({
+  label,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange(checked: boolean): void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-zinc-700 bg-zinc-900 p-3 text-sm text-zinc-300">
+      <input
+        type="checkbox"
+        className="mt-0.5 h-4 w-4 accent-blue-500"
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span>
+        <span className="block text-zinc-100">{label}</span>
+        {/* <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{description}</span> */}
+      </span>
+    </label>
   );
 }

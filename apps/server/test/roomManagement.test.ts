@@ -33,7 +33,7 @@ describe('LiveKitRoomService', () => {
       {
         identity: 'guest_owner123',
         tracks: [],
-      } as unknown,
+      },
     ];
     const target = {
       identity: 'guest_target12',

@@ -77,17 +77,7 @@ export class LiveKitTokenIssuer implements TokenIssuer {
       this.reservations.delete(`${request.roomName}:${participant.identity}`);
     }
 
-    const roomReservations = [...this.reservations.keys()].filter((key) =>
-      key.startsWith(`${request.roomName}:`),
-    ).length;
-
-    const replacingParticipant = resumeIsValid && duplicateIsActive ? 1 : 0;
-    if (
-      participants.length - replacingParticipant + roomReservations >=
-      this.config.maxParticipants
-    ) {
-      throw new AppError('A sala atingiu o limite de participantes.', 409, 'ROOM_FULL');
-    }
+    // Room capacity limit removed - no longer enforced.
 
     const reservationKey = `${request.roomName}:${request.participantIdentity}`;
     if (this.reservations.has(reservationKey) && !resumeIsValid) {

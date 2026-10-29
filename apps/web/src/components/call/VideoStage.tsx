@@ -82,7 +82,9 @@ export function VideoStage({ layout }: { layout: ThumbnailLayoutPreferences }) {
           if (publication.isSubscribed !== shouldSubscribe) {
             try {
               publication.setSubscribed(shouldSubscribe);
-            } catch { }
+            } catch {
+              // A disconnected publication may reject while the participant list is refreshing.
+            }
           }
         }
       }
@@ -110,7 +112,7 @@ export function VideoStage({ layout }: { layout: ThumbnailLayoutPreferences }) {
         {thumbnails.length > 0 && thumbnailsHidden && (
           <button
             type="button"
-            className={`ui-motion glass absolute z-20 flex items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-xs font-medium text-zinc-200 shadow-xl ${COLLAPSED_POSITIONS[layout.position]}`}
+            className={`ui-motion glass absolute z-20 flex items-center gap-2 rounded-md border border-white/15 px-3 py-2 text-xs font-medium text-zinc-200 shadow-xl ${COLLAPSED_POSITIONS[layout.position]}`}
             aria-label={`Mostrar ${thumbnails.length} miniaturas`}
             onClick={() => setThumbnailsHidden(false)}
           >
@@ -196,7 +198,7 @@ function ThumbnailRail({
       >
         <button
           type="button"
-          className="ui-motion rounded-lg p-2 hover:bg-white/10 hover:text-white"
+          className="ui-motion rounded-md p-2 hover:bg-white/10 hover:text-white"
           title="Ocultar miniaturas"
           aria-label="Ocultar miniaturas"
           onClick={onHide}
@@ -208,7 +210,7 @@ function ThumbnailRail({
           <>
             <button
               type="button"
-              className="ui-motion rounded-lg p-2 hover:bg-white/10 disabled:opacity-30"
+              className="ui-motion rounded-md p-2 hover:bg-white/10 disabled:opacity-30"
               aria-label="Página anterior de participantes"
               disabled={page === 0}
               onClick={() => onPage(page - 1)}
@@ -220,7 +222,7 @@ function ThumbnailRail({
             </span>
             <button
               type="button"
-              className="ui-motion rounded-lg p-2 hover:bg-white/10 disabled:opacity-30"
+              className="ui-motion rounded-md p-2 hover:bg-white/10 disabled:opacity-30"
               aria-label="Próxima página de participantes"
               disabled={page === pageCount - 1}
               onClick={() => onPage(page + 1)}
@@ -239,7 +241,7 @@ function ThumbnailRail({
             key={item.key}
             aria-label={`Colocar ${participantLabel(item)} em foco`}
             title={`Colocar ${participantLabel(item)} em foco`}
-            className={`ui-motion shrink-0 rounded-2xl border border-white/15 bg-zinc-950 text-left shadow-lg hover:-translate-y-0.5 hover:border-white/50 ${TILE_SIZES[layout.size]}`}
+            className={`ui-motion shrink-0 rounded-md border border-zinc-900/15 text-left shadow-lg hover:-translate-y-0.5 hover:border-zinc-900 ${TILE_SIZES[layout.size]}`}
             onClick={() => onFocus(item.key)}
           >
             <ParticipantVideo

@@ -4,6 +4,10 @@ import {
   loadJoinPreferences,
   saveDevicePreference,
 } from '../lib/storage.js';
+import {
+  loadAudioProcessingPreferences,
+  toAudioCaptureOptions,
+} from '../lib/webrtc/audioProcessing.js';
 import { friendlyMediaError } from '../lib/webrtc/mediaErrors.js';
 
 export interface DeviceState {
@@ -86,9 +90,7 @@ export function useMediaDevices() {
           ...(preferences.current.microphoneId
             ? { deviceId: { exact: preferences.current.microphoneId } }
             : {}),
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+          ...toAudioCaptureOptions(loadAudioProcessingPreferences()),
           channelCount: 1,
         });
         const videoConstraints = (): MediaTrackConstraints => ({
@@ -208,11 +210,17 @@ export function useMediaDevices() {
       enabledRef.current.camera = enabled;
       setState((current) => ({ ...current, cameraEnabled: enabled }));
       const track = streamRef.current?.getVideoTracks()[0];
-      if (track?.readyState === 'live') {
+      if (track && track.readyState === 'live') {
         track.enabled = enabled;
         return;
       }
-      if (enabled) void startPreview({ cameraEnabled: true });
+      if (enabled) {
+        void startPreview({ cameraEnabled: true });
+        return;
+      }
+      if (track) {
+        track.enabled = false;
+      }
     },
     [startPreview],
   );
@@ -222,11 +230,17 @@ export function useMediaDevices() {
       enabledRef.current.microphone = enabled;
       setState((current) => ({ ...current, microphoneEnabled: enabled }));
       const track = streamRef.current?.getAudioTracks()[0];
-      if (track?.readyState === 'live') {
+      if (track && track.readyState === 'live') {
         track.enabled = enabled;
         return;
       }
-      if (enabled) void startPreview({ microphoneEnabled: true });
+      if (enabled) {
+        void startPreview({ microphoneEnabled: true });
+        return;
+      }
+      if (track) {
+        track.enabled = false;
+      }
     },
     [startPreview],
   );

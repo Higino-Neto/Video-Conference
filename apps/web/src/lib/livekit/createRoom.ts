@@ -7,19 +7,28 @@ import {
   supportsDynacast,
 } from 'livekit-client';
 import type { JoinPreferences } from '../../pages/LobbyPage.js';
+import {
+  loadAudioProcessingPreferences,
+  toAudioCaptureOptions,
+  type AudioProcessingPreferences,
+} from '../webrtc/audioProcessing.js';
 
-export function createCallRoom(preferences: JoinPreferences) {
+export function createCallRoom(
+  preferences: JoinPreferences,
+  audioProcessing: AudioProcessingPreferences = loadAudioProcessingPreferences(),
+) {
   return new Room({
     adaptiveStream: supportsAdaptiveStream(),
     dynacast: supportsDynacast(),
     disconnectOnPageLeave: true,
     stopLocalTrackOnUnpublish: true,
     singlePeerConnection: true,
+    // Web Audio is required to boost remote participants above 100%; the
+    // plain <audio> element clamps volume to 1.0.
+    webAudioMix: true,
     audioCaptureDefaults: {
       ...(preferences.microphoneId ? { deviceId: preferences.microphoneId } : {}),
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
+      ...toAudioCaptureOptions(audioProcessing),
       channelCount: 1,
     },
     audioOutput: preferences.speakerId ? { deviceId: preferences.speakerId } : {},

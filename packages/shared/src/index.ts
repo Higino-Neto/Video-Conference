@@ -62,6 +62,57 @@ export interface AdmissionQueueResponse {
 
 export type AdmissionDecision = 'approve' | 'deny';
 
+export type QuestionStatus = 'queued' | 'live' | 'answered' | 'archived';
+
+export interface MeetingQuestion {
+  id: string;
+  authorName: string;
+  authorIdentity: string | null;
+  text: string;
+  status: QuestionStatus;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+  answeredAt: string | null;
+}
+
+export interface ActiveQuestionResponse {
+  revision: number;
+  activeQuestion: MeetingQuestion | null;
+}
+
+export interface QuestionQueueResponse extends ActiveQuestionResponse {
+  queuedQuestions: MeetingQuestion[];
+  answeredQuestions: MeetingQuestion[];
+  archivedQuestions: MeetingQuestion[];
+}
+
+export interface CreateQuestionRequest {
+  authorName: string;
+  authorIdentity?: string | undefined;
+  text: string;
+  expectedRevision: number;
+}
+
+export interface UpdateQuestionRequest {
+  authorName: string;
+  authorIdentity?: string | null | undefined;
+  text: string;
+  expectedRevision: number;
+}
+
+export type QuestionAction = 'show' | 'answer' | 'requeue' | 'archive';
+
+export interface QuestionActionRequest {
+  action: QuestionAction;
+  expectedRevision: number;
+}
+
+export interface ReorderQuestionsRequest {
+  questionIds: string[];
+  expectedRevision: number;
+}
+
 export interface PublicConfig {
   livekitUrl: string;
   livekitConfigured: boolean;

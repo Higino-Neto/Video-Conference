@@ -1,13 +1,18 @@
 import type {
+  ActiveQuestionResponse,
   CreateRoomResponse,
+  CreateQuestionRequest,
   AdmissionDecision,
   AdmissionQueueResponse,
   ModerationAction,
   ModerationResponse,
   PublicConfig,
+  QuestionAction,
+  QuestionQueueResponse,
   RoomStatusResponse,
   TokenRequest,
   TokenResponse,
+  UpdateQuestionRequest,
 } from '@ufmg/shared';
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
@@ -98,6 +103,104 @@ export function decideAdmission(
         Authorization: `Bearer ${resumeCredential}`,
       },
       body: JSON.stringify({ decision }),
+    },
+  );
+}
+
+export function fetchActiveQuestion(
+  roomName: string,
+  resumeCredential: string,
+  signal?: AbortSignal,
+) {
+  return request<ActiveQuestionResponse>(
+    `/api/rooms/${encodeURIComponent(roomName)}/questions/active`,
+    {
+      headers: { Authorization: `Bearer ${resumeCredential}` },
+      ...(signal ? { signal } : {}),
+    },
+  );
+}
+
+export function fetchQuestionQueue(
+  roomName: string,
+  resumeCredential: string,
+  signal?: AbortSignal,
+) {
+  return request<QuestionQueueResponse>(`/api/rooms/${encodeURIComponent(roomName)}/questions`, {
+    headers: { Authorization: `Bearer ${resumeCredential}` },
+    ...(signal ? { signal } : {}),
+  });
+}
+
+export function createQuestion(
+  roomName: string,
+  payload: CreateQuestionRequest,
+  resumeCredential: string,
+) {
+  return request<QuestionQueueResponse>(`/api/rooms/${encodeURIComponent(roomName)}/questions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${resumeCredential}`,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateQuestion(
+  roomName: string,
+  questionId: string,
+  payload: UpdateQuestionRequest,
+  resumeCredential: string,
+) {
+  return request<QuestionQueueResponse>(
+    `/api/rooms/${encodeURIComponent(roomName)}/questions/${encodeURIComponent(questionId)}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${resumeCredential}`,
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function runQuestionAction(
+  roomName: string,
+  questionId: string,
+  action: QuestionAction,
+  expectedRevision: number,
+  resumeCredential: string,
+) {
+  return request<QuestionQueueResponse>(
+    `/api/rooms/${encodeURIComponent(roomName)}/questions/${encodeURIComponent(questionId)}/actions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${resumeCredential}`,
+      },
+      body: JSON.stringify({ action, expectedRevision }),
+    },
+  );
+}
+
+export function reorderQuestions(
+  roomName: string,
+  questionIds: string[],
+  expectedRevision: number,
+  resumeCredential: string,
+) {
+  return request<QuestionQueueResponse>(
+    `/api/rooms/${encodeURIComponent(roomName)}/questions/order`,
+    {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${resumeCredential}`,
+      },
+      body: JSON.stringify({ questionIds, expectedRevision }),
     },
   );
 }
